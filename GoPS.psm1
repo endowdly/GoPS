@@ -599,13 +599,37 @@ function Invoke-GoPS {
         if ($null -ne $jp) {
             $jp | Jump
         }
+        elseif ([string]::IsNullOrWhiteSpace($Path)) {
+            Push-Location $pwd 
+        }
         else {
             $Path | Jump
         }
     }
 }
 
+# .Synopsis Go back i times in the directory stack.
+function Back ([int]$i = 1) { Invoke-GoPS -Back -BackDepth $i }
+
 #endregion
+
+$newCompletionResult = {
+    [System.Management.Automation.CompletionResult]::new(
+        $_.Token,
+        $_.Token,
+        [System.Management.Automation.CompletionResultType]::ParameterValue,
+        ('JumpPath: ' + $_.JumpPath)
+    )
+}
+$tokenCompletions = {
+    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
+
+    (Get-NavigationEntry).Where{ $_.Token -like "$wordToComplete*" }.Foreach($newCompletionResult) 
+}
+
+Register-ArgumentCompleter -CommandName Invoke-GoPS -ParameterName Path -ScriptBlock $tokenCompletions
+Register-ArgumentCompleter -CommandName Remove-NavigationEntry -ParameterName Token -ScriptBlock $tokenCompletions
+Register-ArgumentCompleter -CommandName Get-NavigationEntry -ParameterName Token -ScriptBlock $tokenCompletions
 
 <#
  
@@ -626,6 +650,8 @@ $Exports = @(
     'Get-NavigationEntry'
     'Remove-NavigationEntry'
     'Invoke-GoPS'
+    'Back'
 )
+
 
 Export-ModuleMember -Function $Exports -Alias 'AddGo', 'GetGo', 'RmGo', 'Go'
