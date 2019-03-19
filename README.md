@@ -75,4 +75,4 @@ Get-DefaultNavigationFile
 
 ## Install
 
-Clone this repository, unzip, and insall into your `ModulePath`.
+Clone this repository, unzip, and install into your `ModulePath`.
