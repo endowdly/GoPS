@@ -19,7 +19,6 @@
 
 param (
     # This is the default navigation file path to be used in every function. Default: $HOME/.navdb
-    [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
     $DefaultPath = "$HOME/.navdb"
 )
 
