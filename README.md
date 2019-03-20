@@ -1,7 +1,7 @@
 # GoPS
 
 This is pretty straight forward file system jumper.
-It uses a database file (that is also loaded into session memory) to jump around with shortcut tokens.  
+It uses a database file (that is also loaded into session memory) to jump around with shortcut tokens.
 Database files can be entered explicity for each command, but to ease use, the default file path can also be set.
 **Features tab completion for tokens**.
 
@@ -75,4 +75,4 @@ Get-DefaultNavigationFile
 
 ## Install
 
-Clone this repository, unzip, and insall into your `ModulePath`.
+Clone this repository, unzip, and install into your `ModulePath`.
