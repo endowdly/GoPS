@@ -41,27 +41,28 @@ Aliases
 CommandType     Name                                               Version    Source
 -----------     ----                                               -------    ------
 Alias           AddGo -> Add-NavigationEnty                        0.0        GoPS
+Alias           Back -> Invoke-Back                                0.0        GoPS
 Alias           GetGo -> Get-NavigationEntry                       0.0        GoPS
 Alias           Go -> Invoke-GoPS                                  0.0        GoPS
 Alias           RmGo -> Remove-NavigationEntry                     0.0        GoPS
-
 ```
 
 Examples
+
 ``` powershell
 # Jump around
-Go home
-Go -Back 2
+go home
+go -Back 2
 back
 back 3
 
 # Manage database
-AddGo home $home
-AddGo do* $home/Documents
-GetGo home this that
-GetGo -ValueOnly
-GetGo here | RmGo
-RmGo home
+addgo home $home
+addgo do* $home/Documents
+getgo home this that
+getgo -ValueOnly
+getgo here | RmGo
+rmgo home
 
 # Manage Files
 # On module import, set the default path

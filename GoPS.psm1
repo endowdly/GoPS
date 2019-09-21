@@ -13,8 +13,8 @@
  
 #>
 <# 
-  .Description 
-    Jump and easily manage a database file of jump paths. 
+.Description 
+  Jump and easily manage a database file of jump paths. 
 #>
 
 param (
@@ -22,69 +22,170 @@ param (
     $DefaultPath = "$HOME/.navdb"
 )
 
-
-#region Shared ----------------------------------------------------------------------------------------------------
+#region Internal ---------------------------------------------------------------
 <#
  
-       _                        _ 
-   ___| |__   __ _ _ __ ___  __| |
-  / __| '_ \ / _` | '__/ _ \/ _` |
-  \__ \ | | | (_| | | |  __/ (_| |
-  |___/_| |_|\__,_|_|  \___|\__,_|
-                                  
+   _       _                        _ 
+  (_)_ __ | |_ ___ _ __ _ __   __ _| |
+  | | '_ \| __/ _ \ '__| '_ \ / _` | |
+  | | | | | ||  __/ |  | | | | (_| | |
+  |_|_| |_|\__\___|_|  |_| |_|\__,_|_|
+                                      
  
 #>
 
-# Creates a new shortcut object for ease of database read & write.
-# obj -> obj -> obj
-function ShortcutObj ($JumpPath, $Token) {
-    [pscustomobject] @{
-        JumpPath = $JumpPath -as [System.String]
-        Token = $Token -as [System.String]
+
+function Invoke-Unless { 
+    <#
+    .Description
+      A ruby-like function.
+      It is the inverse of if.
+      bool -> scriptblock -> unit 
+    #>
+
+    [Alias('unless')]
+    
+    param (
+        # A conditional expression.
+        $c,
+
+        # A scriptblock to invoke if condition is False.
+        $sb
+    )
+
+    if (-not $c) {
+        & $sb 
+    } 
+}
+
+
+function Assert-Path ($s) {
+    <#
+    .Description
+      Halt on Test-Path failure.
+      Takes a filepath.
+      string -> unit
+    #> 
+
+    unless (Test-Path $s) {
+        throw ($Messages.TerminatingError.NavFileInvalid -f $s)
+    }
+
+    $true
+}
+
+
+function Test-String ($s) {
+    <#
+    .Synopsis
+      Tests if a string is null or empty. 
+    .Description
+      True if a string is something.
+      False if a string is nothing.
+      string -> bool
+    #>
+
+    -not (
+        [string]::IsNullOrEmpty($s) -or
+        [string]::IsNullOrWhiteSpace($s)
+    )
+}
+
+
+filter Skip-NullObject {
+    <#
+    .Description
+      Only pass an object if one of its properties has a value.
+      obj? -> obj
+    #>
+
+    foreach ($p in $_.PSObject.Properties.Value) {
+        if (Test-String $p) {
+            return $_
+        }
+    }
+}
+
+function New-ShortcutObject ($JumpPath, $Token) {
+    <#
+    .Description
+      Creates a new shortcut object for ease of database read & write.
+      obj -> obj -> obj
+    #>
+
+    [PSCustomObject]@{
+        PSTypeName = 'GoPS.Shortcut'
+        JumpPath   = $JumpPath
+        Token      = $Token
     }
 }
 
 
-# Collect incoming objects.
-# obj -> obj[]
-function Collect {
-    $x = [System.Collections.ArrayList]::new()
+function Group-PSItem {
+    <#
+    .Description
+      Collect pipeline objects into an array.
+      obj -> obj[]
+    #>
 
-    foreach ($obj in $input) {
-        [void] $x.Add($obj)
-    }
+    @($input)
 
-    $x.ToArray()
+    # $ls = New-Object System.Collections.ArrayList 
+
+    # foreach ($obj in $input) {
+    #     [void] $ls.Add($obj)
+    # }
+
+    # $ls.ToArray()
 }
 
 
-# Add an object to our db.
-# obj -> string -> unit
-function ToNavDb ($s) {
-    $input | Export-Csv -Path $s -NoTypeInformation                        
+function Export-ObjectTo ($s) {
+    <#
+    .Description
+      Adds an object to a database file.
+      obj -> string -> unit 
+    #>
+
+    $input | Export-Csv -Path $s -NoTypeInformation                  
 } 
 
 
-# Create a new database list.
-# unit -> unit
-function NewDb {
-    $script:Db = [System.Collections.ArrayList]::new()
+function New-Database {
+    <#
+    .Description
+      Create a new database list.
+      unit -> unit
+    #>
+
+    $script:Database = New-Object System.Collections.ArrayList
 }
 
 
-# Update the database list with the file contents
-# unit -> unit
-function UpdateDb ($s = $DefaultPath) {
+function Update-Database ($s = $DefaultPath) {
+    <#
+    .Description
+      Update the database list with the file contents.
+      unit -> unit
+    #>
+ 
     if (Test-Path $s) { 
-        $script:Db = [System.Collections.ArrayList]::new((Import-Csv $s))
+        $script:Database = @(Import-Csv $s) -as [System.Collections.ArrayList]
+        # New-Database
+
+        # [void] $script:Database.AddRange(@(Import-Csv $s))
     }
 }
 
 
-# Add an entry to the database list.
-# obj -> unit
-filter AddToDb {
-    [void] $script:Db.Add($_)
+function Add-EntryToDatabase ($x) {
+    <#
+    .Description
+      Add an entry to the database list.
+      obj -> unit
+    #>
+
+    [void] $script:Database.Add($x)
 }
 
 #endregion
@@ -108,14 +209,14 @@ $Import = @{
     FileName        = 'GoPS.Resources.psd1'
 }
 
-Import-LocalizedData @Import -ErrorAction SilentlyContinue
-
-# Fallback to en-US culture 
-if (-not (Test-Path variable:\Messages)) {
-    Import-LocalizedData @Import -UICulture en-US -ErrorAction Stop
+try {
+    Import-LocalizedData @Import -ErrorAction Stop
+}
+catch {
+    Import-LocalizedData @Import -UICulture en-US -ErrorAction Stop 
 }
 
-UpdateDb
+Update-Database
 
 #endregion
 
@@ -132,6 +233,12 @@ UpdateDb
 #>
 
 function Get-DefaultNavigationFile {
+    <#
+    .Description
+      Returns the default path of the navigation file currently set.
+      unit -> PathInfo
+    #>
+
     Resolve-Path $script:DefaultPath
 }
 
@@ -150,19 +257,30 @@ function Get-DefaultNavigationFile {
 #>
 
 function Set-DefaultNavigationFile {
+    <#
+    .Synopsis
+      Sets the default navigation file path.
+    .Description
+      Sets the default navigation file path for GoPS.
+      The default path is set on module load.
+      If no parameter is sent on module load, default path defaults to .navdb in the user's home path.
+    #>
+
     [CmdletBinding(SupportsShouldProcess)]
+
     param (
-        # Specifies a path to database file. Default: $HOME/.navdb
-        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-        [string]
-        $Path = $DefaultPath
+        # Specifies a path to database file.
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)] 
+        [ValidateScript({ Assert-Path $_ })]
+        [string] $Path = $DefaultPath
     )
     
     end {
-        if ($PSCmdlet.ShouldProcess($Path, 'Setting as default path for GoPs')) {
+        if ($PSCmdlet.ShouldProcess($Path, $Messages.ShouldProcess.SetDefaultNavigationFile)) {
             $script:DefaultPath = $Path 
         }
+
+        Update-Database $Path
     }
 }
 
@@ -199,31 +317,20 @@ function New-NavigationFile {
     param (
         # Specifies a path to database file. Default: $HOME/.navdb
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-        [string]
-        $Path = $DefaultPath,
+        [ValidateScript({ Assert-Path $_ })]
+        [string] $Path = $DefaultPath,
 
         # Forces creation of a new file.
-        [switch]
-        $Force
+        [switch] $Force
     )
     
-    begin { 
-        $noClobber = !$Force
-        function NewNavFile { 
-            NewDb 
-            
-            ShortCutObj |
-                AddToDb |
-                Collect |
-                Export-Csv -Path $Path -NoTypeInformation -NoClobber:$noClobber 
-        }
-    }
-    
-    end {
-        if ($PSCmdlet.ShouldProcess($Path, 'Creating new navigation database')) {
-            NewNavFile
-        }
+    $NoClobber = !$Force
+
+    if ($PSCmdlet.ShouldProcess($Path, $Messages.ShouldProcess.NewNavigationFile)) {
+        New-ShortcutObject | 
+            Export-Csv -Path $Path -NoClobber:$NoClobber -NoTypeInformation
+
+        Update-Database $Path
     }
 }
 
@@ -271,92 +378,62 @@ function Add-NavigationEnty {
     param (
         # Specifies a path to database file.
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-        [string]
-        $Path = $DefaultPath,
+        [ValidateScript({ Assert-Path $_ })]
+        [string] $Path = $DefaultPath,
 
         # Jump Path.
         [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
-        [string]
-        $JumpPath = $pwd,
+        [string] $JumpPath = $pwd,
 
         # Shortcut to use.
         [Parameter(Position = 0, ValueFromPipelineByPropertyName)]
         [ValidateNotNullOrEmpty()]
         [Alias('Shortcut')]
-        [string] 
-        $Token,
+        [string] $Token,
 
         # Validate the Jump Path.
-        [switch]
-        $Validate,
+        [switch] $Validate,
 
         # Pass the database object through.
-        [switch]
-        $PassThru
+        [switch] $PassThru
     )
 
-    begin {
-        # Warns if a jump path does not exist.
-        # Exits if user also Validates.
-        # unit -> unit 
-        function ValidateJumpPath {
-            $isJumpPath = Test-Path $JumpPath
+    process {
+        $isJumpPath = Test-Path $JumpPath
 
-            if (-not $isJumpPath) {
-                Write-Warning ($Messages.BadJumpPath -f $JumpPath) 
-            } 
-
-            if ($Validate -and -not $isJumpPath) {
-                exit 1 
-            }
+        unless ($isJumpPath) {
+            Write-Warning ($Messages.Warning.BadJumpPath -f $JumpPath) 
         }
-        
 
-        # Only pass an object if one of its properties has a value.
-        # obj -> obj?
-        filter FilterNullObj {
-            foreach ($p in $_.PSObject.Properties.Value) {
-                if (-not [string]::IsNullOrEmpty($p)) {
-                    return $_
-                }
-            }
+        if ($Validate -and -not $isJumpPath) {
+            Write-Verbose ($Messages.Verbose.BadJumpPathValidated -f $JumpPath)
+
+            return
         }
-        
 
-        # Check for dupes and bounce if one is found
-        # obj -> unit
-        function ExitOnDuplicates ($obj) {
-            # Check for dupes and bounce if one is found.
-            $isDuplicateToken = $obj.Token.Contains($Token)
+        if ($null -ne $Database) {
+            $isDuplicateToken = $Database.Token.Contains($Token)
 
             if ($isDuplicateToken) {
-                Write-Error ($Messages.AddNavTokenDuplicate -f $Token) -ErrorAction Stop
-            } 
-        }
-    }
-
-    process {
-        ValidateJumpPath
-
-        if ($null -ne $Db) {
-            ExitOnDuplicates $Db
+                Write-Error ($Messages.TerminatingError.AddNavTokenDuplicate -f $Token) -ErrorAction Stop
+            }
         } 
 
         # Xeq 
-        if ($PSCmdlet.ShouldProcess($Path, "Adding: $Token -> $JumpPath")) {
-            $newShortCut = ShortcutObj $JumpPath $Token
-            
-            $newShortCut | AddToDb
+        $newShortCut = New-ShortcutObject $JumpPath $Token
+        $shouldProcessMessage = $Messages.ShouldProcess.AddNavigationEntry -f $Token, $Path
 
-            $Db.ToArray() |
-                FilterNullObj |
-                Collect | 
-                ToNavDb $Path 
+        if ($PSCmdlet.ShouldProcess($Path, $shouldProcessMessage)) {
+            Add-EntryToDatabase $newShortCut
 
-            if ($PassThru) {
-               $newShortCut 
-            } 
+            $Database.ToArray() |
+                Skip-NullObject |
+                Group-PSItem |
+                Export-ObjectTo $Path 
+        } 
+
+        if ($PassThru) {
+            $newShortCut 
         } 
     }
 }
@@ -397,31 +474,28 @@ function Get-NavigationEntry {
     param (
         # Specifies a path to database file.
         [Parameter(ValueFromPipelineByPropertyName)]
-        [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-        [string]
-        $Path = $DefaultPath,
+        [ValidateScript({ Assert-Path $_ })]
+        [string] $Path = $DefaultPath,
 
         # The tokens to fetch from the database.
         [Parameter(Position = 0, ValueFromPipeline, ValueFromRemainingArguments, ValueFromPipelineByPropertyName)]
-        [string[]]
-        $Token = '*',
+        [string[]] $Token = '*',
 
         # Returns the jump path only.
         [Alias('PathOnly', 'ValueOnly')]
-        [switch]
-        $JumpPathOnly
+        [switch] $JumpPathOnly
     )
     
     begin { 
         $dbContent = 
             if ($PSBoundParameters.ContainsKey('Path')) {
-                Import-Csv -Path $Path 
+                @(Import-Csv -Path $Path)
             }
             else {
-                $Db 
+                $Database | Skip-NullObject
             }
         $getToken = {
-            $s = $_
+            $s = $_ + '*'
             $dbContent.Where{ $_.Token -like $s }
         }
         $out = {
@@ -470,34 +544,39 @@ function Remove-NavigationEntry {
     param (
        # Specifies a path to database file.
        [Parameter(ValueFromPipelineByPropertyName)]
-       [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-       [string]
-       $Path = $DefaultPath,
+       [ValidateScript({ Assert-Path $_ })]
+       [string] $Path = $DefaultPath,
 
        # The tokens to remove from the database.
        [Parameter(Position = 0, ValueFromPipeline, ValueFromRemainingArguments, ValueFromPipelineByPropertyName)]
-       [string[]]
-       $Token 
+       [string[]] $Token 
     )
     
     begin {
         $dbContent = Import-Csv -Path $Path 
         $getRemainingToken = {
-            $s = $_
+            $s = $_ + '*'
             $dbContent.Where{ $_.Token -notlike $s }
         }
+        $getTargets = {
+            $s = $_ + '*'
+            $dbContent.Where{ $_.Token -like $s }
+        } 
     }
     
     process {
-        if ($PSCmdlet.ShouldProcess(($Token -join ", "), 'Removing from database')) {
-            $Token.Foreach($getRemainingToken) |
-                Collect |
-                ToNavDb $Path 
+        $targets = $Token.Foreach($getTargets)
+
+        if ($PSCmdlet.ShouldProcess($targets, $Messages.ShouldProcess.RemoveNavigationEntry)) {
+            $Token |
+                ForEach-Object $getRemainingToken |
+                Group-PSItem |
+                Export-ObjectTo $Path
         } 
     }
     
     end {
-        UpdateDb $Path
+        Update-Database $Path
     }
 }
 
@@ -533,54 +612,43 @@ function Invoke-GoPS {
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [AllowNull()]
         [Alias('Token')]
-        [string]
-        $Path,
+        [string] $Path,
 
         # Database file to load info from.
         [Parameter()]
-        [ValidateScript({ (Test-Path $_) -or $( throw "${_}: not a valid nav file!" ) })]
-        [string]
-        $DatabasePath = $DefaultPath,
+        [ValidateScript({ Assert-Path $_ })]
+        [string] $DatabasePath = $DefaultPath,
 
         # If a previous location is available on the stack, goes back one location.
-        [switch]
-        $Back,
+        [switch] $Back,
         
         # If back is indicated, will try to go back into the stack at this depth.
-        [int]
-        $BackDepth = 1
+        [int] $BackDepth = 1
     )
 
-    begin {
-        
-
+    begin { 
         $dbContent = 
             if ($PSBoundParameters.ContainsKey('DatabasePath')) {
                 Import-Csv -Path $DatabasePath 
             }
             else {
-                $Db 
-            }
-
+                $Database 
+            } 
+        $stackCount = (Get-Location -Stack).Count
         
-        function GetJumpPath {
-            $dbContent.Where{ $Path -like $_.Token }.JumpPath
-        }
 
-        filter Jump {
-            if (Test-Path $_) {
-                Push-Location $_
+        function Jump ($s) {
+            if (Test-Path $s) {
+                Push-Location $s
             }
             else {
-                Write-Warning ($Messages.BadJumpPath -f $_)
+                Write-Warning ($Messages.Warning.BadJumpPath -f $s)
             }
-
-            return
         }
     }
 
     end {
-        if ($Back -and ($BackDepth -le (Get-Location -Stack).Count)) {
+        if ($Back -and ($BackDepth -le $stackCount)) {
 
             do {
                 Pop-Location
@@ -589,41 +657,56 @@ function Invoke-GoPS {
 
             return
         }
-        if ($Back -and ($BackDepth -gt (Get-Location -Stack).Count)) {
-            Write-Error ($Messages.StackDepthExceeded -f $BackDepth) -ErrorAction Stop
+
+        if ($Back -and ($BackDepth -gt $stackCount)) {
+            Write-Error ($Messages.TerminatingError.StackDepthExceeded -f $BackDepth) -ErrorAction Stop
         }
 
-        $jp = GetJumpPath
+        $jp = $dbContent.Where{ $Path -like $_.Token }.JumpPath
 
         if ($null -ne $jp) {
-            $jp | Jump
+            Jump $jp
         }
-        elseif ([string]::IsNullOrWhiteSpace($Path)) {
+        elseif (!$Path) {
             Push-Location $pwd 
         }
         else {
-            $Path | Jump
+            Jump $Path
         }
     }
 }
 
-# .Synopsis Go back i times in the directory stack.
-function Back ([int]$i = 1) { Invoke-GoPS -Back -BackDepth $i }
+
+function Invoke-Back {
+    <#
+    .Synopsis
+      Go back n times in the directory stack.
+    #>
+
+    [Alias('Back')]
+
+    param (
+        [int] $n = 1 
+    )
+
+    Invoke-GoPS -Back -BackDepth $n
+}
 
 #endregion
 
-$newCompletionResult = {
-    [System.Management.Automation.CompletionResult]::new(
-        $_.Token,
-        $_.Token,
-        [System.Management.Automation.CompletionResultType]::ParameterValue,
-        ('JumpPath: ' + $_.JumpPath)
-    )
-}
 $tokenCompletions = {
-    param($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
+    param ($commandName, $parameterName, $wordToComplete, $commandAst, $fakeBoundParameter)
 
-    (Get-NavigationEntry).Where{ $_.Token -like "$wordToComplete*" }.Foreach($newCompletionResult) 
+    Get-NavigationEntry | 
+        Where-Object Token -like "$wordToComplete*" | 
+        ForEach-Object { 
+            New-Object System.Management.Automation.CompletionResult @(
+                $_.Token
+                $_.Token
+                'ParameterValue'
+                $_.Token 
+            ) 
+        }
 }
 
 Register-ArgumentCompleter -CommandName Invoke-GoPS -ParameterName Path -ScriptBlock $tokenCompletions
@@ -641,7 +724,7 @@ Register-ArgumentCompleter -CommandName Get-NavigationEntry -ParameterName Token
  
 #>
 
-$Exports = @(
+$Functions = @(
     'Get-DefaultNavigationFile'
     'Set-DefaultNavigationFile'
     'New-NavigationFile'
@@ -649,8 +732,16 @@ $Exports = @(
     'Get-NavigationEntry'
     'Remove-NavigationEntry'
     'Invoke-GoPS'
+    'Invoke-Back'
+)
+
+$Aliases = @(
+    'AddGo'
+    'GetGo'
+    'RmGo'
+    'Go'
     'Back'
 )
 
 
-Export-ModuleMember -Function $Exports -Alias 'AddGo', 'GetGo', 'RmGo', 'Go'
+Export-ModuleMember -Function $Functions -Alias $Aliases

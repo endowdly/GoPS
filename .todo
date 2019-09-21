@@ -1,0 +1,16 @@
+Add:
+    ✔ Function messages @started(19-09-20 19:35) @done(19-09-20 20:55) @lasted(1h20m34s)
+
+Fix: 
+    Get-NavigationEntry:
+        ✔ Does not correctly get wildcard tokens @done(19-09-21 09:40) 
+            -- I fixed this a long time ago.
+            -- done: 2019-06-24T12:23:33.1283624-04:00
+
+Cleanup:
+    ✔ Better names @started(19-09-20 22:46) @done(19-09-21 07:55) @lasted(9h9m29s)
+    ✔ Just clean up code @started(19-09-20 19:21) @done(19-09-21 11:56) @lasted(16h35m49s)
+    ✔ Better comment-based help @started(19-09-21 07:53) @done(19-09-21 07:55) @lasted(2m26s)
+
+Testing:
+    ☐ Include Tests? 
