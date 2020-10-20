@@ -14,3 +14,25 @@ Cleanup:
 
 Testing:
     ☐ Include Tests? 
+
+Version 2.0:
+    -- After migrating across several computers, I've noticed I have huge issues
+    -- Time for a total rework. 
+
+    Add: 
+        ✘ Config file @cancelled(20-10-19 18:45)
+        ✔ Export-NavigationDatabase @done(20-10-18 20:01)
+        ✔ Update-NavigationDatabase @done(20-10-18 20:01)
+
+    Reimplement:
+        ✔ New-NavigationFile @started(20-10-16 17:25) @done(20-10-18 13:37) @lasted(1d20h12m23s)
+        ✔ Get-DefaultNavigationFile @started(20-10-18 13:32) @done(20-10-18 13:33) @lasted(1m15s)
+        ✔ Set-DefaultNavigationFile @started(20-10-18 13:32) @done(20-10-18 13:45) @lasted(13m2s)
+        ✔ Add-NavigationEntry @done(20-10-19 01:08)
+        ✔ Get-NavigationEntry @done(20-10-19 01:08)
+        ✔ Remove-NavigationEntry @done(20-10-19 01:08)
+        ✔ Invoke-GoPS @done(20-10-19 19:57)
+        ✔ Invoke-Back @done(20-10-19 19:57)
+
+    ☐ Document
+
