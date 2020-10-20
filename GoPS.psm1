@@ -606,6 +606,7 @@ $Aliases = @(
     'rmgo'
 )
 
+Update-NavigationDatabase
 Export-ModuleMember -Function $Functions -Alias $Aliases
 
 #endregion
