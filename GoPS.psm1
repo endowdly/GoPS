@@ -137,17 +137,25 @@ function New-Database {
 }
 
 
-filter Add-Entry ($x) {
-    if ($_.TokenSet.Add($x.Token)) {
-        [void] $_.EntryList.Add($x)
+# filter Add-Entry ($x) {
+#     if ($_.TokenSet.Add($x.Token)) {
+#         [void] $_.EntryList.Add($x)
         
-        $_ 
+#         $_ 
+#     } 
+#     else {
+#         Write-Warning ($Message.Warning.AddEntry -f $x.Token)
+#     }
+# }
+
+filter Add-Entry ($x) {
+    if ($x.TokenSet.Add($_.Token)) {
+        [void] $x.EntryList.Add($_)
     } 
     else {
-        Write-Warning ($Message.Warning.AddEntry -f $x.Token)
+        Write-Warning ($Message.Warning.AddEntry -f $_.Token)
     }
 }
-
 filter ConvertFrom-Database {
     $_.EntryList.ToArray()
 }
@@ -178,15 +186,11 @@ function Get-ValidJumpPaths {
 
 function Import-NavigationFile ($s) {
     $x = New-Database 
+    $xs = (Import-Csv $s) -as [Entry[]]
 
-    Import-Csv $s | 
-        New-Entry |
-        ForEach-Object { 
-            $x | Add-Entry $_
-        } |
-        Out-Null
+    $xs | Add-Entry $x
 
-    $x
+    $x 
 }
 #endregion
 
@@ -272,10 +276,13 @@ function New-NavigationFile {
     )
     
     $NoClobber = !$Force
+    $x = New-Database
 
     if ($PSCmdlet.ShouldProcess($Path, $Message.ShouldProcess.NewNavigationFile)) {
-        New-Database | 
-            Add-Entry (New-Entry Home $HOME) |
+        New-Entry Home $HOME |
+            Add-Entry $x 
+
+        $x |
             ConvertFrom-Database |
             Export-Csv -Path $Path -NoClobber:$NoClobber -NoTypeInformation
 
@@ -425,11 +432,10 @@ function Add-NavigationEntry {
         Write-Warning ($Message.Warning.BadJumpPath -f $JumpPath) 
     }
 
-    $x = New-Entry -Token $Token -Path $JumpPath 
+    New-Entry -Token $Token -Path $JumpPath |
+        Add-Entry $GoPS.Database 
 
-    $GoPS.Database |
-        Add-Entry $x | 
-        ConvertFrom-Database
+    $GoPS.Database | ConvertFrom-Database 
 }
 
 
@@ -597,13 +603,15 @@ $Functions = @(
     'Invoke-Back'
     'Export-NavigationDatabase'
     'Update-NavigationDatabase'
+    # 'Import-NavigationFile'
 )
-$Aliases = @( 
+
+$Aliases = @(
     'go'
     'back'
     'addgo'
-    'getgo'
     'rmgo'
+    'getgo'
 )
 
 Update-NavigationDatabase

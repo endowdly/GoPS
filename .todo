@@ -33,6 +33,11 @@ Version 2.0:
         ✔ Remove-NavigationEntry @done(20-10-19 01:08)
         ✔ Invoke-GoPS @done(20-10-19 19:57)
         ✔ Invoke-Back @done(20-10-19 19:57)
+        ☐ Argument Completers
+
+    Fix: 
+        ✔ Update-Nav... only adds the final entry @started(20-10-23 10:42) @done(20-10-23 10:43) @lasted(1m21s)
 
     ☐ Document
+    ☐ Message 
 
