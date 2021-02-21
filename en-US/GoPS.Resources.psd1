@@ -1,23 +1,27 @@
 @{
     ShouldProcess    = @{
-        SetDefaultNavigationFile = 'Setting as default path for GoPs'
+        ExportNavigationDatabase = 'Exporting navigation database -> {0}'
+        SetDefaultNavigationFile = 'Setting as default path for GoPS'
+        UpdateNavigationDatabase = 'Update navigation database with file -> {0}'
         NewNavigationFile        = 'Creating new navigation database'
-        AddNavigationEntry       = 'Adding: {0} -> {1}' 
-        RemoveNavigationEntry    = 'Removing from database'
+    }
+
+    Error = @{
+        AddEntry = 'Cannot add duplicate token; token already exists -> {0}'
     }
 
     TerminatingError = @{
-        AddNavEntryDuplicate = 'Navigation entry contains duplicate {0}: {1}'
-        AddNavTokenDuplicate = 'Navigation entry contains duplicate Token: {0}'
-        StackDepthExceeded   = '{0} exceeds directory stack depth!'
-        NavFileInvalid       = '{0}: not a valid nav file!' 
+        StackDepthExceeded = '{0} exceeds directory stack depth of {1}!'
+        NavFileInvalid     = 'Invalid NavFile Path -> {0}'
     }
 
     Warning          = @{
-        BadJumpPath = 'JumpPath {0} does not currently exist!' 
-    }
+        BadJumpPath = 'JumpPath does not currently exist -> {0}'
+        NoNavFile = 'There is no NavFile at {0}. You should run ''New-NavigationFile'' :)'
+    } 
 
     Verbose          = @{
-        BadJumpPathValidated = 'Did not create entry; Validate is True and {0} does not exist.'
+        SetDefaultNavigationFile = 'Set default NavFile Path -> {0}'
+        NewNavigationFile = 'New NavFile created -> {0}'
     } 
 }

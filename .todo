@@ -1,21 +1,5 @@
-Add:
-    ✔ Function messages @started(19-09-20 19:35) @done(19-09-20 20:55) @lasted(1h20m34s)
 
-Fix: 
-    Get-NavigationEntry:
-        ✔ Does not correctly get wildcard tokens @done(19-09-21 09:40) 
-            -- I fixed this a long time ago.
-            -- done: 2019-06-24T12:23:33.1283624-04:00
-
-Cleanup:
-    ✔ Better names @started(19-09-20 22:46) @done(19-09-21 07:55) @lasted(9h9m29s)
-    ✔ Just clean up code @started(19-09-20 19:21) @done(19-09-21 11:56) @lasted(16h35m49s)
-    ✔ Better comment-based help @started(19-09-21 07:53) @done(19-09-21 07:55) @lasted(2m26s)
-
-Testing:
-    ☐ Include Tests? 
-
-Version 2.0:
+2.0:
     -- After migrating across several computers, I've noticed I have huge issues
     -- Time for a total rework. 
 
@@ -23,6 +7,7 @@ Version 2.0:
         ✘ Config file @cancelled(20-10-19 18:45)
         ✔ Export-NavigationDatabase @done(20-10-18 20:01)
         ✔ Update-NavigationDatabase @done(20-10-18 20:01)
+        ✔ Up @done(21-02-20 22:05)
 
     Reimplement:
         ✔ New-NavigationFile @started(20-10-16 17:25) @done(20-10-18 13:37) @lasted(1d20h12m23s)
@@ -33,11 +18,10 @@ Version 2.0:
         ✔ Remove-NavigationEntry @done(20-10-19 01:08)
         ✔ Invoke-GoPS @done(20-10-19 19:57)
         ✔ Invoke-Back @done(20-10-19 19:57)
-        ☐ Argument Completers
 
-    Fix: 
-        ✔ Update-Nav... only adds the final entry @started(20-10-23 10:42) @done(20-10-23 10:43) @lasted(1m21s)
+    ✔ Document @done(21-02-20 22:05)
 
-    ☐ Document
-    ☐ Message 
+2.0.1: 
 
+    Fix:
+        ☐ Jumping to normal, non-token paths

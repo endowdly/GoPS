@@ -1,78 +1,118 @@
 # GoPS
 
 This is pretty straight forward file system jumper.
-It uses a database file (that is also loaded into session memory) to jump around with shortcut tokens.
-Database files can be entered explicity for each command, but to ease use, the default file path can also be set.
-**Features tab completion for tokens**.
 
-## Usage
+Store often-visited paths as tokens and jump to them easily with the `go` command.
+Things like `go gd` and `go home` or `go ~` are now easily possible.
 
-Jumper
+The user can save their jumppaths to file with the `Export-NavigationDatabase` command.
 
-``` plaintext
-Invoke-GoPS [[-Path] <String>] [-DatabasePath <String>] [-Back] [-BackDepth <Int32>] [<CommonParameters>]
+GoPS now includes simple internal stack managment.
+Any function that alters the path will store visited locations in two different stacks: one storing all paths visited, and the other storing a path stack similar to the Provider stack accessible with `Get-`, `Push-` and `Pop-Location`.
+The internal path stack will allow users to easily recall which paths were visited that can be popped with the `back` command.
+Call `Get-GoPSStack` to view stack.
+User can call `back` repeatedly to pop backwards one directory at a time, or use a numeric argument to jump backwards several directories.
 
-Back [[-i] <Int>]
-```
+In a similiar utility level, users can call `last` to jump back and forth between the last visited directory.
+The last path visited is _not_ stored on the stack, so it will not disrupt `back` moves.
+The jumps to last are recorded in the complete jump history.
 
-Manage Database
+The user can call `Get-JumpHistory` to see all paths visited with a GoPS command.
 
-``` plaintext
-Add-NavigationEnty [-Path <String>] [[-JumpPath] <String>] [[-Token] <String>] [-Validate] [-PassThru] [-WhatIf] [-Confirm] [<CommonParameters>]
+Another new addition is a small port of Up, a command written for unix shells by Shannon Moeller.
+I had helped port it to the fish shell and I've used that code to write a working solution for PowerShell.
+Up is insanley useful and will bring up the path tree instead of spamming `cd ..`.
+This instance of `up` is fully integrated with GoPS and its locations get stored on the path stack and history.
 
-Get-NavigationEntry [-Path <String>] [[-Token] <String[]>] [-JumpPathOnly] [<CommonParameters>]
+GoPS has been updated to **version 2.0**.
+The major difference is now most Token and JumpPath management is handled internally (in memory) with data classes.
+**GoPS no longer automatically reads/writes to a file.**
+Use `Update-NavigationDatabase` to read a set of JumpPaths and Tokens in from a file.
+Use `Export-NavigationDatabase` to write your current set of JumpPaths and Tokens to a file.
 
-Remove-NavigationEntry [-Path <String>] [[-Token] <String[]>] [-WhatIf] [-Confirm] [<CommonParameters>]
-```
+## Managing the data file
 
-Manage the database file
+The file is stored as a simple, flat csv.
+It defaults to `$HOME/.gops`.
+The files default location can be set on module load or with a function.
+This default location is not persistant and only lasts with the sesson.
+The user can, but should not, manually edit this file.
+It is better to let PowerShell validate the paths.
 
-``` plaintext
-New-NavigationFile [[-Path] <String>] [-Force] [-WhatIf] [-Confirm] [<CommonParameters>]
+### Default file location
 
-Set-DefaultNavigationFile [[-Path] <string>] [-WhatIf] [-Confirm]  [<CommonParameters>]
+`Import-Module GoPS -ArgumentList <string>  # This changes the default location for the module on load`
+`Set-DefaultNavigationFile -Path <string>  # This changes the default location for the module after load`
 
-Get-DefaultNavigationFile
-```
+### Create a new file
 
-Aliases
+`New-NavigationFile [-Path <string>]  # This uses the default location if none is given`
 
-``` plaintext
-CommandType     Name                                               Version    Source
------------     ----                                               -------    ------
-Alias           AddGo -> Add-NavigationEnty                        0.0        GoPS
-Alias           Back -> Invoke-Back                                0.0        GoPS
-Alias           GetGo -> Get-NavigationEntry                       0.0        GoPS
-Alias           Go -> Invoke-GoPS                                  0.0        GoPS
-Alias           RmGo -> Remove-NavigationEntry                     0.0        GoPS
-```
+### Change the file
 
-Examples
+`Export-NavigationDatabase [-Path <string>]  # Exports whatever is in getgo to the path provided or default location`
 
-``` powershell
-# Jump around
-go home
-go -Back 2
-back
-back 3
+### Import from the file
 
-# Manage database
-addgo home $home
-addgo do* $home/Documents
-getgo home this that
-getgo -ValueOnly
-getgo here | RmGo
-rmgo home
+`Update-NavigationDatabase [-Path <string>]  # Reads from the file and replaces the database in memory`
 
-# Manage Files
-# On module import, set the default path
-Import-Module GoPS -Argument $YourDefaultPath
+## Managing the database
 
-# Otherwise
-New-NavigationFile $ADifferentPath
-Set-DefaultNavigationFile $ADifferentPath
-Get-DefaultNavigationFile
-```
+You do not need to load or export to a file to manage a database.
+However, the database only lasts for you session and its data is not persistant.
+Use `Export-NavigationDatabase` to save your JumpPaths.
+
+### Adding entries
+
+`Add-NavigationEntry [-Token] <string> [-Path] <string>`
+`addgo <string> <string>`
+
+### Getting entries
+
+`Get-NavigationEntry [[-Token] <string[]>]`
+`getgo [<string[]>]`
+
+It's important to note that `getgo` accepts remaining objects for tokens.
+Things like `getgo this that theOther` are possible.
+Wildcard tokens are accepted.
+Features tab completion for current tokens.
+If you don't give `getgo` arguments, it'll just return the current contents of the database.
+
+### Removing entires
+
+`Remove-NavigationEntry [[-Token] <string[]>]`
+`rmgo [<string[]>]`
+
+`rmgo` functions very similiarly to `getgo`.
+
+### Jumping
+
+Ah, the important stuff.
+
+### Going foward
+
+`Invoke-GoPS [[-Path] <string>]  # Path can be -Token too`
+`go [<string>]`
+
+`go` jumps to tokens, but will also goto valid paths.
+It accept tab completion for current tokens, so you will have to type a qualified path.
+NOTE: jumping to a path seems to be slightly bugged right now.
+It probably has to do with my implemenation of using DirectoryInfo as a validator.
+
+### Going back
+
+`Invoke-Back [[-n] <int>]`
+`back [<int>]`
+
+`Invoke-Last`
+`last`
+
+### Going up
+
+`Invoke-Up [[-Value] <Object>]  # accepts wildcard strings, or numbers`
+`up <object>`
+
+Similar to `back` and `last`, but only goes up a directory tree.
 
 ## Install
 

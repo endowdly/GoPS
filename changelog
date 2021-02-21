@@ -1,0 +1,44 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0] - 19 Mar 2019
+
+### Init
+
+## [2.0] - 20 Feb 2021
+
+After migrating across several computers, I've noticed I have huge issues.
+Time for a total rework.
+
+### Added
+
+- Internal module classes handle data allocation.
+- Internal data stack to better track jumps and history.
+- More comment-based documentation.
+- New Noun: NavigationDatabase.
+- Export-NavigationDatabase: handles moving jump paths to file.
+- Update-NavigationDatabase: handles updating database from a file.
+- Invoke-Up: A rejiggering of my work on Up by Shannon Moeller for PowerShell.
+- up: alias for Invoke-Up.
+- ArgumentCompleters for New- and Remove-NavigationEntry.
+- Invoke-Last: jump back and forth to the last path reached with GoPS.
+- last: alias for Invoke-Last.
+
+### Changed
+
+- Moved away from a largely I/O-centric.
+- Most manipulation is done in module memory.
+- Export- and Update- verbs now set and load when needed.
+- -DefaultNavigationFile: mostly unchanged, but slightly tweaked to play wit the new internal data structures.
+- New-NavigationFile: to handle new data file creation.
+- Remove-NavigationEntry has lost the ability to recieve input from Get-NavigationEntry; this will be re-added later.
+
+### Fixed
+
+- Tab completion issues.
+- File import issues.
+- Duplicate token issues.
+- Token wildcard issues.

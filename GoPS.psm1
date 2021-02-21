@@ -25,6 +25,7 @@ param (
     $DefaultPath = "$HOME/.gops"
 )
 
+#region Setup ------------------------------------------------------------------
 <#
  
                                 
@@ -38,7 +39,6 @@ param (
                           '     
  
 #>
-#region Setup ------------------------------------------------------------------
 
 $ErrorActionPreference = 'Stop' 
 $ModuleRoot = Split-Path $PSScriptRoot -Leaf
@@ -57,10 +57,9 @@ catch {
     Import-LocalizedData @ResourceFile -UICulture en-US
 }
 
-
-
 #endregion
 
+#region Classes ----------------------------------------------------------------
 <#
  
                                            
@@ -74,7 +73,7 @@ catch {
                                            
  
 #>
-#region Classes ----------------------------------------------------------------
+
 
 class Entry {
     [string] $Token
@@ -88,9 +87,17 @@ class Database {
     [HashSet[string]] $TokenSet
 }
 
+# A nice, human-readable Entry list
+class JumpStack {
+    [int] $Jump
+    [string] $Name
+    [string] $FullName
+}
+
 
 #endregion 
 
+#region helper -----------------------------------------------------------------
 <#
  
                                       
@@ -104,9 +111,13 @@ class Database {
                     '                 
  
 #>
-#region helper -----------------------------------------------------------------
+
 
 function New-Entry {
+    # .Description
+    # Creates a new Entry object.
+    # string -> string -> Entry
+
     [CmdletBinding()]
 
     param(
@@ -130,6 +141,10 @@ function New-Entry {
 
 
 function New-Database {
+    # .Description 
+    # Creates a new Database object.
+    # () -> Database
+
     [Database] @{
         EntryList = @()
         TokenSet = @()
@@ -137,38 +152,53 @@ function New-Database {
 }
 
 
-# filter Add-Entry ($x) {
-#     if ($_.TokenSet.Add($x.Token)) {
-#         [void] $_.EntryList.Add($x)
-        
-#         $_ 
-#     } 
-#     else {
-#         Write-Warning ($Message.Warning.AddEntry -f $x.Token)
-#     }
-# }
-
 filter Add-Entry ($x) {
+    # .Description 
+    # Adds a piped Entry to a Database object.
+    # This modifies the Database object.
+    # seq<Entry> -> Database -> () 
+
     if ($x.TokenSet.Add($_.Token)) {
         [void] $x.EntryList.Add($_)
     } 
     else {
-        Write-Warning ($Message.Warning.AddEntry -f $_.Token)
+        Write-Error ($Message.Error.AddEntry -f $_.Token)
     }
 }
+
+
 filter ConvertFrom-Database {
+    # .Description
+    # Converts a Database object to an Entry array.
+    # Database -> Entry[]
+
     $_.EntryList.ToArray()
 }
 
 
-function Get-ValidJumpPaths {
-    $f = { $_.IsValid }
+function New-JumpStack {
+    # .Description
+    # Creates a new JumpStack object from a piped DirectoryInfo object.
+    # seq<DirectoryInfo> -> JumpStack
 
-    $input.Where($f)
+    begin { 
+        $c = 1
+    }
+
+    process { 
+        [JumpStack] @{
+            Jump = $c
+            Name = $_.Name
+            FullName = $_.FullName
+        }
+
+        $c++
+    }
 }
 
 #endregion
 
+#region Internal ---------------------------------------------------------------
 <#
  
                                             
@@ -182,9 +212,20 @@ function Get-ValidJumpPaths {
                                             
  
 #>
-#region Internal ---------------------------------------------------------------
+
 
 function Import-NavigationFile ($s) {
+    # .Description
+    # Imports the data from a navigation file and returns the Database object.
+    # If no file is at the given path, returns a friendly information string and returns an empty Database object.
+    # string -> Database
+
+    if (!(Test-Path $s)) {
+        Write-Warning ($Message.Information.NoNavFile -f $s)
+
+        return New-Database 
+    }
+
     $x = New-Database 
     $xs = (Import-Csv $s) -as [Entry[]]
 
@@ -192,8 +233,38 @@ function Import-NavigationFile ($s) {
 
     $x 
 }
+
+
+function Push-Path ($s) {
+    # .Description
+    # If the given path is a valid directory, does 2 things:
+    # 1. Pushes the current path onto module PathStack
+    # 2. Changes the path to the given path, recording the path onto the provider path stack 
+    # string -> ()
+    
+    $x = [System.IO.DirectoryInfo] $s
+
+    if ($x.Exists) {
+        $GoPS.PathStack.Push($GoPS.LastPath)
+
+        Push-Location $x.FullName -StackName GoPS
+    } 
+}
+
+
+# Module variables go here
+$GoPS = @{
+    DefaultPath = $DefaultPath
+    Database    = New-Database
+    LastPath    = $PWD.Path
+    PathStack   = [Stack[System.IO.DirectoryInfo]] @()
+}
+
+
 #endregion
 
+
+#region gatekeeping ------------------------------------------------------------
 <#
  
      __ ,                                                         
@@ -207,15 +278,11 @@ function Import-NavigationFile ($s) {
                                              '              '----`
  
 #> 
-#region gatekeeping ------------------------------------------------------------
 
 function Assert-Path ($s) {
-    <#
-    .Description
-      Halt on Test-Path failure.
-      Takes a filepath.
-      string -> unit
-    #> 
+    # .Description
+    # Halt on Test-Path failure.
+    # string -> ()
 
     if (!(Test-Path $s)) {
         throw ($Message.TerminatingError.NavFileInvalid -f $s)
@@ -227,12 +294,8 @@ function Assert-Path ($s) {
 #endregion
 
 
-# Module variables go here
-Set-Variable GoPS -Value @{
-    DefaultPath = $DefaultPath
-    Database = New-Database
-}
 
+#region Public -----------------------------------------------------------------
 <#
  
                                  
@@ -246,7 +309,6 @@ Set-Variable GoPS -Value @{
                                  
  
 #>
-#region Public -----------------------------------------------------------------
 
 function New-NavigationFile {
     <#
@@ -266,7 +328,7 @@ function New-NavigationFile {
     [CmdletBinding(SupportsShouldProcess)]
 
     param(
-        # Specifies a path to database file. Default: $HOME/.navdb
+        # Specifies a path to database file. Default: Module DefaultPath
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
         [string] $Path = $GoPS.DefaultPath
@@ -293,9 +355,11 @@ function New-NavigationFile {
 
 function Get-DefaultNavigationFile {
     <#
+    .Synopsis 
+      Returns the default path of the navigation file currently set.
     .Description
       Returns the default path of the navigation file currently set.
-      unit -> PathInfo
+      () -> PathInfo
     #>
 
     Resolve-Path $GoPS.DefaultPath
@@ -315,7 +379,7 @@ function Set-DefaultNavigationFile {
     [CmdletBinding(SupportsShouldProcess)]
 
     param(
-        # Specifies a path to database file.
+        # Specifies a path to database file. Default: Module DefaultPath
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)] 
         [ValidateScript({ Assert-Path $_ })]
         [string] $Path = $GoPS.DefaultPath
@@ -361,7 +425,7 @@ function Export-NavigationDatabase {
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [Database] $InputObject = $GoPS.Database
         ,
-        # Specifies a path to one or more locations.
+        # Specifies a path to database file. Default: Module DefaultPath
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
         [Alias('PSPath')]
@@ -379,21 +443,21 @@ function Export-NavigationDatabase {
 function Update-NavigationDatabase {
     <#
     .Synopsis
-      Updates the navigation database in memory contents of a navigation file.
+      Updates the navigation database in memory to the contents of a navigation file.
     .Description 
+      Updates the navigation database in memory to the contents of a navigation file.
     .Example 
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
 
     param(
-        # The navigation file to import from.
+        # Specifies a path to database file. Default: Module DefaultPath
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
         [Alias('PSPath')]
         [string] $Path = $GoPS.DefaultPath
     )
-
     
     if ($PSCmdlet.ShouldProcess($Path, $Message.ShouldProcess.UpdateNavigationDatabase)) { 
         $GoPS.Database = Import-NavigationFile $Path
@@ -405,6 +469,8 @@ function Add-NavigationEntry {
     <#
     .Description
       Adds a token and jump path to the database.
+    .Example
+      PS> addgo jump C:\Users\me\jump
     #>
 
     [CmdletBinding()]
@@ -424,18 +490,29 @@ function Add-NavigationEntry {
         [Parameter(Position = 1, ValueFromPipelineByPropertyName)]
         [ValidateNotNull()]
         [string] $JumpPath = $PWD
+        ,
+        [switch] $Silent
     )
 
-    $isValidPath = Test-Path $JumpPath
+    process {
+        $isValidPath = Test-Path $JumpPath
 
-    if (!$isValidPath) {
-        Write-Warning ($Message.Warning.BadJumpPath -f $JumpPath) 
+        if (!$isValidPath) {
+            Write-Warning ($Message.Warning.BadJumpPath -f $JumpPath) 
+        }
+
+        New-Entry -Token $Token -Path $JumpPath |
+            Add-Entry $GoPS.Database 
     }
 
-    New-Entry -Token $Token -Path $JumpPath |
-        Add-Entry $GoPS.Database 
+    end {
+        
+        if ($Silent.IsPresent) {
+            return
+        }
 
-    $GoPS.Database | ConvertFrom-Database 
+        $GoPS.Database | ConvertFrom-Database 
+    }
 }
 
 
@@ -443,19 +520,33 @@ function Get-NavigationEntry {
     <#
     .Description
       Returns navigation entries in the database.
+    .Example 
+      PS> getgo this that theOther
+
+      Returns the jumppaths for the tokens 'this', 'that', and 'theOther'.
+    .Example
+       PS> getgo git* 
+
+      Returns all the jumpaths starting with git
+    .Example
+      PS> getgo -jumppathonly
+
+      Returns a list of all the fullpaths for each jump path in the databse.
     #>
 
     [CmdletBinding()]
     [Alias('GetGo')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
     
     param( 
-        # Specifies a path to a database file.
+        # Specifies a path to a database file. Default: Module DefaultPath
         [Parameter(ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
         [string] $Path = $GoPS.DefaultPath
         ,
-        # The tokens to fetch from the database.
+        # The tokens to fetch from the database. Default: '*'
         [Parameter(Position = 0, ValueFromPipeline, ValueFromRemainingArguments)]
+        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
         [string[]] $Token = '*'
         ,
         # Returns the jump path only.
@@ -463,13 +554,22 @@ function Get-NavigationEntry {
         [switch] $JumpPathOnly
     )
 
-    $x = $GoPS.Database | ConvertFrom-Database
-    $f = {
-       $_.Token -like $Token
-    } 
-    $y = $x.Where($f)
-    
-    ($y, $y.Path)[$JumpPathOnly.IsPresent]
+    begin {
+        $x = $GoPS.Database | ConvertFrom-Database
+        $f = {
+            $currentToken = $_
+
+            $x.Where($g)
+        }
+        $g = {
+            $_.Token -like $currentToken
+        } 
+    }
+
+    process {
+        $y = $Token.Foreach($f) 
+        ($y, $y.Path)[$JumpPathOnly.IsPresent]
+    }
 }
 
 
@@ -477,6 +577,10 @@ function Remove-NavigationEntry {
     <#
     .Synopsis
       Removes entry from navigation database.
+    .Example
+      PS> rmgo this that theOther
+
+      Removes the tokens 'this', 'that', and 'theOther' from the Database.
     #>
 
     [CmdletBinding()]
@@ -488,27 +592,34 @@ function Remove-NavigationEntry {
             ValueFromPipeline,
             ValueFromRemainingArguments,
             ValueFromPipelineByPropertyName)]
+        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
         [string[]] $Token 
         ,
-        [switch] $PassThru
-    )
+        [switch] $Silent
+    ) 
 
-    $x = $GoPS.Database 
-    $y = Get-NavigationEntry $Token
+    begin {
+        $f = {
+            $x = Get-NavigationEntry $_
 
-    if (!$y) {
-        return 
-
-        if ($PassThru.IsPresent) {
-            $x | ConvertFrom-Database
+            if ($null -ne $x) { 
+                [void] $GoPS.Database.EntryList.Remove($x)
+                [void] $GoPS.Database.TokenSet.Remove($_)
+            }
         }
     }
 
-    [void] $x.EntryList.Remove($y)
-    [void] $x.TokenSet.Remove($Token)
+    process {
+        $x = $Token.ForEach($f)
+    }
 
-    if ($PassThru.IsPresent) { 
-        $x | ConvertFrom-Database
+    end {
+
+        if ($Silent.IsPresent) { 
+            return
+        }
+
+        $GoPS.Database | ConvertFrom-Database
     }
 }
 
@@ -517,28 +628,66 @@ function Invoke-GoPS {
     <#
     .Synopsis
       Jumps to a token.
+    .Description
+      Invoke-GoPS is the primary use point for the module.
+
+      Because Invoke-GoPS handles jumping to paths stored in the Database, Invoke-GoPS can also ease other console navigation.
+      Each jump or directory visited with the 'go' command is stored in an internal Path Stack.
+      This stack allows to user to quickly jump back a number of directories with the Back function. 
+      Using the -Last switch will allow the user to jump back and forth to the last visited directory.
+      This location is not popped off the stack and not recorded in the stack. 
+
+      Back and Last are provided in the module as convenience functions.
+    .Example
+      PS> go home
+    .Link
+      Invoke-Back
+    .Link
+      Invoke-Last
+    .Inputs 
+      string
+    .Outputs 
+      void
+    .Notes 
+      string -> ()
+      int -> ()
     #>
+
     [Alias('Go')]
     [CmdletBinding()]
 
     param (
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
         [AllowNull()]
         [Alias('Token')]
         [string] $Path,
 
         # If a previous location is available on the stack, goes back one location.
-        [switch] $Back,
-        
+        [switch] $Back
+        ,
+        # Goes to the last visited location.
+        [switch] $Last
+        ,
         # If back is indicated, will try to go back into the stack at this depth.
         [int] $BackDepth = 1
     )
 
-    $stackCount = (Get-Location -Stack).Count
+    $stackCount = $GoPS.PathStack.Count
+    $lastPath = $GoPS.lastPath
+    $GoPS.LastPath = $pwd.Path
+
+    # $stackCount = (Get-Location -Stack).Count
+
+    if ($Last) {
+        Push-Location $lastPath -StackName GoPS
+        
+        return 
+    }
 
     if ($Back -and ($BackDepth -le $stackCount)) { 
         do {
-            Pop-Location
+            Push-Location $GoPS.PathStack.Pop().FullName -StackName GoPS
             $BackDepth--
         } until ($BackDepth -eq 0)
 
@@ -546,26 +695,32 @@ function Invoke-GoPS {
     }
 
     if ($Back -and ($BackDepth -gt $stackCount)) {
-        Write-Error ($Message.TerminatingError.StackDepthExceeded -f $BackDepth) -ErrorAction Stop
+        Write-Error ($Message.TerminatingError.StackDepthExceeded -f $BackDepth, $stackCount) -ErrorAction Stop
     }
 
     $x = Get-NavigationEntry $Path
 
     if ($x.IsValid) {
-        Push-Location $x.Path
-    }
-    elseif (-not $PSBoundParameters.ContainsKey('Path')) {
-        Push-Location $pwd
+        Push-Path $x.Path
     }
     else {
-        if (Test-Path $Path) {
-            Push-Location $Path
-        }
+        Push-Path $Path
     }
 }
 
 
 function Invoke-Back {
+    <# 
+    .Description
+      Calls Invoke-GoPS with the -Back switch enabled. 
+      Back only works with paths reach with GoPS.
+    .Link
+      Invoke-GoPS
+    .Link
+      Get-GoPSStack
+    #>
+
+    # The number of back jumps to make.
     [Alias('Back')]
     param(
         [int] $n = 1
@@ -575,8 +730,168 @@ function Invoke-Back {
 }
 
 
+function Invoke-Last {
+    <# 
+    .Description
+      Calls Invoke-GoPS with the -Last switch enabled. 
+      Last only works with paths reached with GoPS.
+    .Link
+      Invoke-GoPS
+    .Link
+      Get-GoPSStack
+    #>
+
+    [Alias('Last')]
+    param ()
+
+    Invoke-GoPS -Last
+}
+
+
+function Get-GoPSStack {
+    <#
+    .Description
+      Displays the current contents of the module Path Stack.
+      () -> JumpStack[]
+    #>
+
+    $GoPS.PathStack | New-JumpStack
+}
+
+
+function Get-JumpHistory {
+    <#
+    .Synopsis
+      Displays the entire path history of the GoPS module (from load).
+    .Description
+      Displays the entire path history of the GoPS module (from load).
+      Unlike the GoPS Path Stack (Get-GoPSStack), last and back commands are recorded.
+    #>
+
+    (Get-Location -StackName GoPS).ToArray() |
+        ForEach-Object Path |
+        ForEach-Object { $_ -as [System.IO.DirectoryInfo] } | 
+        New-JumpStack
+}
+
+
+function Invoke-Up {
+    <#
+    .Synopsis
+      Traverse up in a path tree easily, accepts paths, wildcard strings, or integers.
+    .Description
+      Traverse up in a path tree easily, accepts paths, wildcard strings, or integers.
+      Accepts integers as the number of directories to move up.
+      Accepts paths to move up to a matching path in a parent directory.
+      Accepts wildcard strings as the same.
+      Derived from up by Shannon Moeller and endowdly's work on the fish port. 
+    .Example
+      PS> Up 2 
+  
+      Moves up 2 parent directories.
+    .Example
+      PS> up  
+  
+      Moves up 2 parent directories.
+    .Example
+      PS> Up Us*
+
+      Moves up to the C:\User directory (if it is the first match in the path tree) 
+    .Notes
+      obj -> ()
+    #>
+
+    [Alias('up')]
+    param($Value)
+    
+    <# Note
+      PWD is returned as a PathInfo object.
+      It is normally safely consumed but all -Location Cmdlets.
+      However, the internal function Push-Path cannot handle PathInfo objects.
+      So, get the strings. #> 
+    
+    $ProviderPathRoot = Convert-Path /
+    function UpDir ($Parent, $Target) {
+
+        if ($Parent -eq $ProviderPathRoot) { 
+            return $Target
+        }
+
+        $p = Split-Path $Parent
+        $a = Split-Path $p -Leaf
+        $b = $Target
+
+        if (!$a -or !$b) {
+             return $PWD.Path
+        }
+
+        if ($a -like $b) {
+            return $p
+        }
+
+        UpDir $p $Target
+    }
+
+    function UpNum ($Parent, $Index) {
+        if ($null -eq $Parent -or $null -eq $Index) {
+            return $PWD.Path
+        }
+
+        if ($Index -le 0) {
+            return $PWD.Path
+        }
+
+        do {
+            $Parent = Split-Path $Parent
+            $Index--
+        } while ($Index -gt 0)
+        
+        $Parent
+    }
+
+    $Up = Convert-Path .. 
+
+    switch ($Value) {
+        $null {
+            Push-Path $Up
+            break
+        }
+
+        { $_ -is [int] } {
+            $temp = UpNum $PWD $Value
+
+            if (Test-Path $temp) {
+                Push-Path $temp
+            }
+
+            break
+        }
+
+        default { 
+            if (Test-Path $Value) {
+                Push-Path $Value
+
+                break
+            }
+
+            $temp = UpDir $PWD.Path $Value
+
+            if (Test-Path $temp) {
+                Push-Path $temp
+
+                break
+            }
+
+            Write-Host @"
+usage: up [ dir | num ]
+pwd: $PWD"
+"@
+        }
+    } 
+}
 #endregion
 
+#region Export -----------------------------------------------------------------
 <#
  
                                        
@@ -590,7 +905,6 @@ function Invoke-Back {
                 '                      
  
 #>
-#region Export -----------------------------------------------------------------
 
 $Functions = @(
     'Get-DefaultNavigationFile'
@@ -601,17 +915,27 @@ $Functions = @(
     'Remove-NavigationEntry'
     'Invoke-GoPS'
     'Invoke-Back'
+    'Invoke-Last'
     'Export-NavigationDatabase'
     'Update-NavigationDatabase'
     # 'Import-NavigationFile'
+
+    'Get-GoPSStack'
+    'Get-JumpHistory'
+    'Get-Token'
+
+    'Invoke-Up'
 )
 
 $Aliases = @(
     'go'
     'back'
+    'last'
     'addgo'
     'rmgo'
     'getgo'
+
+    'up'
 )
 
 Update-NavigationDatabase
