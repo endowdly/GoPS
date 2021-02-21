@@ -34,7 +34,7 @@ Time for a total rework.
 - Export- and Update- verbs now set and load when needed.
 - -DefaultNavigationFile: mostly unchanged, but slightly tweaked to play wit the new internal data structures.
 - New-NavigationFile: to handle new data file creation.
-- Remove-NavigationEntry has lost the ability to recieve input from Get-NavigationEntry; this will be re-added later.
+- Remove-NavigationEntry has lost the ability to receive input from Get-NavigationEntry; this will be re-added later.
 
 ### Fixed
 
