@@ -26,4 +26,27 @@
         ☐ Jumping to normal, non-token paths
 
     Change:
-        ✔ Clean up readme. Should be a fix, if you ask me. @started(21-02-20 23:30) @done(21-02-21 02:20) @lasted(2h50m42s)
+        ☐ Clean up readme. Should be a fix, if you ask me. @started(21-02-20 23:30)
+        ☐ Update installation instructions in readme (no unzipping)
+
+2.0.2:
+    Change:
+        ☐ Allow ArgumentCompleter for NavigationEntry functions to match on partial tags
+
+    Change:
+        ☐ General code cleanup
+
+2.1.0:
+    Add:
+        ☐ ArgumentCompleter to Invoke-Up
+
+    Change:
+        ☐ Cleanup Invoke-Up
+    
+2.2.0: 
+    Add:
+        ☐ Config file to allow user to set aliases
+
+    Change:
+        ☐ Module alias setting to avoid command conflicts
+        ☐ Update readme and module doc
