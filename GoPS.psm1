@@ -241,8 +241,10 @@ function Push-Path ($s) {
     # 1. Pushes the current path onto module PathStack
     # 2. Changes the path to the given path, recording the path onto the provider path stack 
     # string -> ()
-    
-    $x = [System.IO.DirectoryInfo] $s
+
+
+    $s1 = Convert-Path $s 
+    $x = [System.IO.DirectoryInfo] $s1
 
     if ($x.Exists) {
         $GoPS.PathStack.Push($GoPS.LastPath)
@@ -500,6 +502,12 @@ function Add-NavigationEntry {
         if (!$isValidPath) {
             Write-Warning ($Message.Warning.BadJumpPath -f $JumpPath) 
         }
+
+        <# Done: IO.DirectoryInfo objects will not validate incomplete, unqualified paths @endowdly
+            'Help' IO.DirectoryInfo validate these paths
+            We don't want invalid paths to be ignored, so only change valid ones
+        #> 
+        $JumpPath = ($JumpPath, (Convert-Path $JumpPath))[$isValidPath]
 
         New-Entry -Token $Token -Path $JumpPath |
             Add-Entry $GoPS.Database 

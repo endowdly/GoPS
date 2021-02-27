@@ -23,11 +23,13 @@
 2.0.1: 
 
     Fix:
-        ☐ Jumping to normal, non-token paths
+        ✔ Jumping to normal, non-token paths @started(21-02-27 13:23) @done(21-02-27 13:30) @lasted(7m36s)
+        ✔ Adding non-qualified paths @started(21-02-27 13:24) @done(21-02-27 13:30) @lasted(6m37s)
 
     Change:
-        ☐ Clean up readme. Should be a fix, if you ask me. @started(21-02-20 23:30)
-        ☐ Update installation instructions in readme (no unzipping)
+        ✔ Clean up readme. Should be a fix, if you ask me. @started(21-02-20 23:30) @done(21-02-27 13:09) @lasted(6d13h39m19s)
+        ✔ Update installation instructions in readme (no unzipping) @done(21-02-27 13:09)
+            -- Redundant but...
 
 2.0.2:
     Change:
