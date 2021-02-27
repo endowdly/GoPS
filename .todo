@@ -41,13 +41,14 @@
 2.1.0:
     Add:
         ☐ ArgumentCompleter to Invoke-Up
+        ☐ Manifest file to track version, etc.
 
     Change:
         ☐ Cleanup Invoke-Up
     
 2.2.0: 
     Add:
-        ☐ Config file to allow user to set aliases
+        ☐ Config file to allow user to set aliases and set default path
 
     Change:
         ☐ Module alias setting to avoid command conflicts

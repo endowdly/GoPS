@@ -1,5 +1,7 @@
 # Changelog
 
+<!-- markdownlint-disable MD024-->
+
 All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -42,3 +44,19 @@ Time for a total rework.
 - File import issues.
 - Duplicate token issues.
 - Token wildcard issues.
+
+## [2.0.1] - 27 Feb 2021
+
+### Added
+
+- vscode settings and extension recommendation (to help my abysmal spelling)
+
+### Fixed
+
+- Jumping to non-qualified paths
+- Adding non-qualified paths to the database record
+
+### Changed
+
+- updated this changelog
+- added ideas to the todo file
