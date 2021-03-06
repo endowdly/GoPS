@@ -87,6 +87,7 @@ class Database {
     [HashSet[string]] $TokenSet
 }
 
+
 # A nice, human-readable Entry list
 class JumpStack {
     [int] $Jump
@@ -214,6 +215,7 @@ function New-JumpStack {
 #>
 
 
+# Todo: Make this a public cmdlet @endowdly
 function Import-NavigationFile ($s) {
     # .Description
     # Imports the data from a navigation file and returns the Database object.
@@ -262,9 +264,7 @@ $GoPS = @{
     PathStack   = [Stack[System.IO.DirectoryInfo]] @()
 }
 
-
 #endregion
-
 
 #region gatekeeping ------------------------------------------------------------
 <#
@@ -281,6 +281,7 @@ $GoPS = @{
  
 #> 
 
+
 function Assert-Path ($s) {
     # .Description
     # Halt on Test-Path failure.
@@ -294,8 +295,6 @@ function Assert-Path ($s) {
 }
 
 #endregion
-
-
 
 #region Public -----------------------------------------------------------------
 <#
@@ -311,6 +310,7 @@ function Assert-Path ($s) {
                                  
  
 #>
+
 
 function New-NavigationFile {
     <#
@@ -554,7 +554,13 @@ function Get-NavigationEntry {
         ,
         # The tokens to fetch from the database. Default: '*'
         [Parameter(Position = 0, ValueFromPipeline, ValueFromRemainingArguments)]
-        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
+        [ArgumentCompleter({ 
+            param ($cmdName, $paramName, $wordToComplete)
+
+            <# Done: Tab-Completion on tokens with partial matching @endowdly #>
+            (Get-NavigationEntry).Token |
+              Where-Object { $_ -like "${wordToComplete}*" } 
+        })]
         [string[]] $Token = '*'
         ,
         # Returns the jump path only.
@@ -576,6 +582,7 @@ function Get-NavigationEntry {
 
     process {
         $y = $Token.Foreach($f) 
+
         ($y, $y.Path)[$JumpPathOnly.IsPresent]
     }
 }
@@ -600,8 +607,14 @@ function Remove-NavigationEntry {
             ValueFromPipeline,
             ValueFromRemainingArguments,
             ValueFromPipelineByPropertyName)]
-        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
-        [string[]] $Token 
+        [ArgumentCompleter({ 
+            param ($cmdName, $paramName, $wordToComplete)
+
+            <# Done: Tab-Completion on tokens with partial matching @endowdly #>
+            (Get-NavigationEntry).Token |
+              Where-Object { $_ -like "${wordToComplete}*" } 
+        })]
+        [string[]] $Token = '*'
         ,
         [switch] $Silent
     ) 
@@ -622,7 +635,6 @@ function Remove-NavigationEntry {
     }
 
     end {
-
         if ($Silent.IsPresent) { 
             return
         }
@@ -666,11 +678,16 @@ function Invoke-GoPS {
 
     param (
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ArgumentCompleter({ (Get-NavigationEntry).Token })]
-        [AllowNull()]
-        [Alias('Token')]
-        [string] $Path,
+        [ArgumentCompleter({ 
+            param ($cmdName, $paramName, $wordToComplete)
 
+            <# Done: partial matching on tokens and available directories @endowdly #>
+            (Get-NavigationEntry).Token + (Get-ChildItem -Directory $wordToComplete* ).Name |
+              Where-Object { $_ -like "${wordToComplete}*" } 
+        })]
+        [Alias('Token')]
+        [string] $Path = '*'
+        ,
         # If a previous location is available on the stack, goes back one location.
         [switch] $Back
         ,
@@ -686,7 +703,6 @@ function Invoke-GoPS {
     $GoPS.LastPath = $pwd.Path
 
     # $stackCount = (Get-Location -Stack).Count
-
     if ($Last) {
         Push-Location $lastPath -StackName GoPS
         
@@ -729,7 +745,9 @@ function Invoke-Back {
     #>
 
     # The number of back jumps to make.
+
     [Alias('Back')]
+
     param(
         [int] $n = 1
     )
@@ -750,6 +768,7 @@ function Invoke-Last {
     #>
 
     [Alias('Last')]
+
     param ()
 
     Invoke-GoPS -Last
@@ -783,6 +802,7 @@ function Get-JumpHistory {
 }
 
 
+# Todo: Up needs some refactoring -> cmdlet w/ArgCompleter @endowldy
 function Invoke-Up {
     <#
     .Synopsis
@@ -810,6 +830,7 @@ function Invoke-Up {
     #>
 
     [Alias('up')]
+
     param($Value)
     
     <# Note

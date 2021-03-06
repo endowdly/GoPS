@@ -33,10 +33,10 @@
 
 2.0.2:
     Change:
-        ☐ Allow ArgumentCompleter for NavigationEntry functions to match on partial tags
+        ✔ Allow ArgumentCompleter for NavigationEntry functions to match on partial tags @started(21-03-06 09:03) @done(21-03-06 10:24) @lasted(1h21m58s)
 
     Change:
-        ☐ General code cleanup
+        ✔ General code cleanup @started(21-03-06 10:25) @done(21-03-06 10:36) @lasted(11m32s)
 
 2.1.0:
     Add:
@@ -44,6 +44,7 @@
         ☐ Manifest file to track version, etc.
 
     Change:
+        ☐ Remove-NavigationEntry to accept Entry objects as Input
         ☐ Cleanup Invoke-Up
     
 2.2.0: 
