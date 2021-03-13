@@ -41,12 +41,12 @@
 2.0.3:
     Change:
         Invoke-Up:
-            ☐ Cleanup
+            ✔ Cleanup @done(21-03-13 18:39)
             
             Value parameter:
                 ✔ Add ArgumentCompleter attribute @started(21-03-13 10:24) @done(21-03-13 12:44) @lasted(2h20m41s)
             Comment-based help:
-                ☐ Update @started(21-03-13 17:41)
+                ✔ Update @started(21-03-13 17:41) @done(21-03-13 18:40) @lasted(59m10s)
             
         Remove-NavigationEntry:
             ✘ Accept Entry objects as Input @started(21-03-13 12:58) @cancelled(21-03-13 13:46) @wasted(48m14s)
