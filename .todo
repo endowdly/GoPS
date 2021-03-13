@@ -38,19 +38,68 @@
     Change:
         ✔ General code cleanup @started(21-03-06 10:25) @done(21-03-06 10:36) @lasted(11m32s)
 
-2.1.0:
-    Add:
-        ☐ ArgumentCompleter to Invoke-Up
-        ☐ Manifest file to track version, etc.
-
+2.0.3:
     Change:
-        ☐ Remove-NavigationEntry to accept Entry objects as Input
-        ☐ Cleanup Invoke-Up
+        Invoke-Up:
+            ☐ Cleanup
+            
+            Value parameter:
+                ✔ Add ArgumentCompleter attribute @started(21-03-13 10:24) @done(21-03-13 12:44) @lasted(2h20m41s)
+            Comment-based help:
+                ☐ Update @started(21-03-13 17:41)
+            
+        Remove-NavigationEntry:
+            ✘ Accept Entry objects as Input @started(21-03-13 12:58) @cancelled(21-03-13 13:46) @wasted(48m14s)
+                -- The ValueFromPipelineByPropertyName Parameter attribute covers this
+
+    Add:
+        ✔ Export-NavigationEntry @done(21-03-13 17:00)
+
+    -- A number of other changes were discovered and resolved
+       See changelog for complete listing
+
+2.0.4:
+    Change:
+        ☐ Update all comment-based help
+
+
+2.1.0-manifest:
+    Add:
+        ☐ Manifest file
+            -- This may make 2.1.0 changes difficult or impossible
+            -- Add this to a branch for easy changes and rollback
     
-2.2.0: 
+2.1.0: 
     Add:
-        ☐ Config file to allow user to set aliases and set default path
+        ☐ Config file
+            -- Allow user to set aliases and set default navigation file path
 
     Change:
-        ☐ Module alias setting to avoid command conflicts
-        ☐ Update readme and module doc
+        ☐ Remove function aliasing from all exported functions
+        ☐ Update readme and module documentation
+        
+        Update module aliases:
+            ☐ Add module function to locally set all aliases in config file
+            ☐ Change Export-ModuleMember to export all locally set aliases
+
+2.1.1:
+    Change:
+        Update-NavigationEntry:
+            Add Entry objects from each path:
+                ☐ Change Path parameter type from string to string[]
+                ☐ Change process block
+
+2.2.0:
+    Add:
+        ☐ Import-NavigationEntry
+
+    Change:
+        Add-NavigationEntry:
+            Add Entry ParameterSet:
+                ☐ Set CmdletBinding attribute DefaultParameterSet property
+                ☐ Add Entry parameter
+                ☐ Change process block
+        
+3.0.0:
+    Remove:
+        ☐ Export-NavigationDatabase

@@ -6,9 +6,62 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0] - 19 Mar 2019
+## [2.0.3] - 13 Mar 2021
 
-### Init
+### Fixed
+
+- `Get-NavigationDatabase`: Path parameter now functions as intended
+- `New-NavigationFile`: removed ValidationScript attribute to Path parameter.
+This attribute made it hard to create new files at the given Path.
+
+### Deprecated
+
+- `Export-NavigationDatabase` renamed to `Export-NavigationEntry` to more accurately reflect its noun.
+Expect `Export-NavigationDatabase` to be removed after all current issues are closed.
+
+### Changed
+
+- this changelog to be in reverse chronological order (last to first)
+- this changelog to qualify function names (no aliases).
+Also, to be more explicit about details in `Added`, `Changed`, and `Removed` sections.
+This will not be retroactive because I am lazy.
+- todo file layout to be more tree-like.
+I find this format easier to follow with more succinct grammar.
+- `Invoke-Up`: added ArgumentCompleter attribute to Value parameter
+- `Export-NavigationDatabase`: changed InputObject parameter from type Database to Entry[].
+This will allow `Export-NavigationDatabase` to accept output from `Get-NavigationEntry`.
+- `Get-NavigationEntry` now filters Entry objects in navigation files in addition to its current behavior.
+The Path parameter accepts incoming path strings (to include wildcard strings) or objects with a Path property.
+- Updated `Get-NavigationEntry` comment-based help
+- Renamed `Export-NavigationDatabase` to `Export-NavigationEntry`
+- Added `Export-NavigationDatabase` alias to `Export-NavigationEntry`
+- Added a warning when calling `Export-NavigationDatabase`
+- Updated en-US culture resource file to reflect deprecation of `Export-NavigationDatabase`
+- Updated `Invoke-Up` comment-based help
+
+## [2.0.2] - 06 Mar 2021
+
+### Changed
+
+- argumentCompleter for `{get,rm,}go` functions/cmdlets now matches on partial token
+- argumentCompleter for `go` also matches partial directories in the cwd
+- minor code reformat
+
+## [2.0.1] - 27 Feb 2021
+
+### Added
+
+- vscode settings and extension recommendation (to help my abysmal spelling)
+
+### Fixed
+
+- Jumping to non-qualified paths
+- Adding non-qualified paths to the database record
+
+### Changed
+
+- updated this changelog
+- added ideas to the todo file
 
 ## [2.0] - 20 Feb 2021
 
@@ -34,7 +87,7 @@ Time for a total rework.
 - Moved away from a largely I/O-centric.
 - Most manipulation is done in module memory.
 - Export- and Update- verbs now set and load when needed.
-- -DefaultNavigationFile: mostly unchanged, but slightly tweaked to play wit the new internal data structures.
+- DefaultNavigationFile: mostly unchanged, but slightly tweaked to play wit the new internal data structures.
 - New-NavigationFile: to handle new data file creation.
 - Remove-NavigationEntry has lost the ability to receive input from Get-NavigationEntry; this will be re-added later.
 
@@ -45,26 +98,7 @@ Time for a total rework.
 - Duplicate token issues.
 - Token wildcard issues.
 
-## [2.0.1] - 27 Feb 2021
+## [1.0] - 19 Mar 2019
 
-### Added
-
-- vscode settings and extension recommendation (to help my abysmal spelling)
-
-### Fixed
-
-- Jumping to non-qualified paths
-- Adding non-qualified paths to the database record
-
-### Changed
-
-- updated this changelog
-- added ideas to the todo file
-
-## [2.0.2] - 06 Mar 2021
-
-### Changed
-
-- argumentCompleter for `{get,rm,}go` functions/cmdlets now matches on partial token
-- argumentCompleter for `go` also matches partial directories in the cwd
-- minor code reformat
+- Init and I don't rememeber what I did.
+- It should have never been considered 1.0.0 though.

@@ -332,7 +332,7 @@ function New-NavigationFile {
     param(
         # Specifies a path to database file. Default: Module DefaultPath
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateScript({ Assert-Path $_ })]
+        # [ValidateScript({ Assert-Path $_ })]
         [string] $Path = $GoPS.DefaultPath
         , 
         # Forces creation of a new file.
@@ -399,7 +399,7 @@ function Set-DefaultNavigationFile {
 }
 
 
-function Export-NavigationDatabase {
+function Export-NavigationEntry {
     <#
     .Synopsis
       Exports the NavigationDatabase in memory to a Navigation File.
@@ -421,22 +421,26 @@ function Export-NavigationDatabase {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
+    [Alias('Export-NavigationDatabase')]
 
     param(
-        # The database to export. Default: Current database in memory
-        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [Database] $InputObject = $GoPS.Database
+        # The Entry objects to export. Default: Entry objects in loaded Database
+        [Parameter(ValueFromPipeline)]
+        [Entry[]] $InputObject = ($GoPS.Database | ConvertFrom-Database)
         ,
         # Specifies a path to database file. Default: Module DefaultPath
-        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Parameter()]
         [ValidateScript({ Assert-Path $_ })]
         [Alias('PSPath')]
         [string] $Path = $GoPS.DefaultPath
     )
 
+    if ($MyInvocation.InvocationName -eq 'Export-NavigationDatabase') {
+        Write-Warning $Message.Warning.ExportNavigationDatabase
+    }
+
     if ($PSCmdlet.ShouldProcess($Path, $Message.ShouldProcess.ExportNavigationDatabase)) {
         $InputObject |
-            ConvertFrom-Database | 
             Export-Csv -Path $Path -NoTypeInformation
     }
 }
@@ -526,40 +530,89 @@ function Add-NavigationEntry {
 
 function Get-NavigationEntry {
     <#
+    .Synopsis 
+      Returns Entry objects filtered by token strings.
     .Description
-      Returns navigation entries in the database.
+      Returns Entry objects in the loaded Databse or from specified files.
+      Accepts path names of navigation files as input or from the Path parameter.
+      Path strings can be wildcarded.
+
+      If no path strings are used, returns Entry objects in the currently loaded Database object. 
+
+      Filters Entry objects by token, which can be entered by the Token parameter or by remaining arguments.
+      Token strings can be wildcarded.
     .Example 
-      PS> getgo this that theOther
+      Get-NavigationEntry -Token 'this', 'that', 'theOther'
 
-      Returns the jumppaths for the tokens 'this', 'that', and 'theOther'.
+      Get Entry objects in the currently loaded Database. 
+      Returns Entry objects with Token properties 'this', 'that', or 'theOther' if they exist.
+    .Example 
+      Get-NavigationEntry this that theOther
+    
+      Get Entry objects in the currently loaded Database by remaining arguments.
+      Returns Entry objects with Token properties 'this', 'that', or 'theOther' if they exist.
     .Example
-       PS> getgo git* 
+      Get-NavigationEntry git* 
+    
+      Get Entry objects in the currently loaded Database by wildcarded Token.
+      Returns all Entry objects with Token properties like 'git*' if they exist.
+    .Example 
+      Get-NavigationEntry -Path ~/.gops2
 
-      Returns all the jumpaths starting with git
-    .Example
-      PS> getgo -jumppathonly
+      Get Entry objects in specific files.
+      Returns all Entry objects in the given paths if they are valid navigation files.
+    .Example 
+      '~/.gops3', '~/.gops2' | Get-NavigationEntry 
 
-      Returns a list of all the fullpaths for each jump path in the databse.
+      Get Entry objects in specific files from the pipeline.
+      Returns all Entry objects in the given paths if they are valid navigation files.
+    .Example 
+      '~/.gops*' | Get-NavigationEntry
+
+      Get Entry objects in specific files by wildcards from the pipeline
+      Returns all Entry objects in the given paths if they are valid navigation files.
+    .Example 
+      Get-NavigationEntry -Path ~/.gops*
+
+      Get Entry objects in specific files by wildcards.
+      Returns all Entry objects in the given paths if they are valid navigation files.
+    .Example 
+      Get-NavigationEntry -Path ~/.gops* -Token git*
+
+      Get Entry objects in specific files by wildcards filtered by Token.
+      Returns all Entry objects in the given paths with Token properties like git* if they are valid navigation files and the Entry objects with the specified Token properties exist.
+
+      Similar for pipelined paths.
+    .Inputs
+      System.String[]
+    .Outputs
+      Entry
+      System.String
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding()] 
     [Alias('GetGo')]
+    [OutputType([Entry], [string])]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
     
     param( 
         # Specifies a path to a database file. Default: Module DefaultPath
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter(
+            ParameterSetName = 'File',
+            ValueFromPipeline,
+            ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
-        [string] $Path = $GoPS.DefaultPath
+        [string[]] $Path = $GoPS.DefaultPath
         ,
         # The tokens to fetch from the database. Default: '*'
-        [Parameter(Position = 0, ValueFromPipeline, ValueFromRemainingArguments)]
+        [Parameter(
+            Position = 0,
+            ValueFromRemainingArguments)]
         [ArgumentCompleter({ 
             param ($cmdName, $paramName, $wordToComplete)
 
             <# Done: Tab-Completion on tokens with partial matching @endowdly #>
-            (Get-NavigationEntry).Token |
-              Where-Object { $_ -like "${wordToComplete}*" } 
+            (Get-NavigationEntry).Token.Where{ $_ -like "${wordToComplete}*" } 
         })]
         [string[]] $Token = '*'
         ,
@@ -569,20 +622,44 @@ function Get-NavigationEntry {
     )
 
     begin {
-        $x = $GoPS.Database | ConvertFrom-Database
         $f = {
-            $currentToken = $_
-
-            $x.Where($g)
+            $_.Token -like $currentToken
         }
         $g = {
-            $_.Token -like $currentToken
-        } 
+            $currentToken = $_
+
+            $ls.Where($f)
+        }
+        $h = {
+            begin {
+                $acc = [List[Entry]] @()
+            }
+
+            process { 
+                Convert-Path $_ |
+                ForEach-Object {
+                    Import-NavigationFile $_ |
+                    ConvertFrom-Database |
+                    ForEach-Object { [void] $acc.Add($_) } 
+                }
+            }
+
+            end {
+                $acc.ToArray()
+            }
+        }
     }
 
     process {
-        $y = $Token.Foreach($f) 
+        $ls =
+            switch ($PSCmdlet.ParameterSetName) {
+                File { $Path.ForEach($h) }
+                default { $GoPS.Database | ConvertFrom-Database }
+            } 
+        $y = $Token.Foreach($g) 
+    }
 
+    end { 
         ($y, $y.Path)[$JumpPathOnly.IsPresent]
     }
 }
@@ -596,6 +673,12 @@ function Remove-NavigationEntry {
       PS> rmgo this that theOther
 
       Removes the tokens 'this', 'that', and 'theOther' from the Database.
+    .Example
+      PS> Get-NavigationEntry home | Remove-NavigationEntry
+
+      Passes the Entry associated with home and removes it from the database.
+    .Link
+      Get-NavigationEntry
     #>
 
     [CmdletBinding()]
@@ -603,7 +686,9 @@ function Remove-NavigationEntry {
 
     param(
         # The tokens to remove from the database.
-        [Parameter(Position = 0,
+        [Parameter(
+            ParameterSetName = 'Token',
+            Position = 0,
             ValueFromPipeline,
             ValueFromRemainingArguments,
             ValueFromPipelineByPropertyName)]
@@ -611,11 +696,10 @@ function Remove-NavigationEntry {
             param ($cmdName, $paramName, $wordToComplete)
 
             <# Done: Tab-Completion on tokens with partial matching @endowdly #>
-            (Get-NavigationEntry).Token |
-              Where-Object { $_ -like "${wordToComplete}*" } 
+            (Get-NavigationEntry).Token.Where{ $_ -like "${wordToComplete}*" }
         })]
-        [string[]] $Token = '*'
-        ,
+        [string[]] $Token
+        , 
         [switch] $Silent
     ) 
 
@@ -631,7 +715,7 @@ function Remove-NavigationEntry {
     }
 
     process {
-        $x = $Token.ForEach($f)
+        $Token.ForEach($f)
     }
 
     end {
@@ -686,7 +770,7 @@ function Invoke-GoPS {
               Where-Object { $_ -like "${wordToComplete}*" } 
         })]
         [Alias('Token')]
-        [string] $Path = '*'
+        [string] $Path
         ,
         # If a previous location is available on the stack, goes back one location.
         [switch] $Back
@@ -779,7 +863,12 @@ function Get-GoPSStack {
     <#
     .Description
       Displays the current contents of the module Path Stack.
-      () -> JumpStack[]
+    .Link
+      Invoke-GoPS
+    .Link 
+      Get-JumpHistory
+    .Notes
+      () -> JumpStack[] 
     #>
 
     $GoPS.PathStack | New-JumpStack
@@ -793,6 +882,12 @@ function Get-JumpHistory {
     .Description
       Displays the entire path history of the GoPS module (from load).
       Unlike the GoPS Path Stack (Get-GoPSStack), last and back commands are recorded.
+    .Link
+      Invoke-GoPS
+    .Link
+      Get-GoPSStack
+    .Notes
+      () -> JumpStack[]
     #>
 
     (Get-Location -StackName GoPS).ToArray() |
@@ -812,26 +907,49 @@ function Invoke-Up {
       Accepts integers as the number of directories to move up.
       Accepts paths to move up to a matching path in a parent directory.
       Accepts wildcard strings as the same.
+
+      Features tab-completion of all parent directories to the provider root.
+      Does nothing on invalid input.
+
       Derived from up by Shannon Moeller and endowdly's work on the fish port. 
     .Example
-      PS> Up 2 
-  
-      Moves up 2 parent directories.
-    .Example
-      PS> up  
-  
-      Moves up 2 parent directories.
-    .Example
-      PS> Up Us*
+      Invoke-Up
 
-      Moves up to the C:\User directory (if it is the first match in the path tree) 
+      Sets the location of the current working directory to the parent directory, if available.
+    .Example
+      Invoke-Up 3
+
+      Sets the location of the current working directory to the third-level parent directory, if available.
+    .Example
+      Invoke-Up Use*
+
+      Sets the location of the current working directory to the first parent directory matching Use*, if available.
+      In this case, would like set the current location to `C:\Users\`.
     .Notes
       obj -> ()
     #>
 
     [Alias('up')]
+    [CmdletBinding()]
 
-    param($Value)
+    param(
+        # This object can be an integer or a string
+        [Parameter(Position = 0)]
+        [ArgumentCompleter({
+            param ($cmdName, $paramName, $wordToComplete, $Ast, $Fbp)
+
+            $here = $p = $pwd
+            $root = Convert-Path /
+            $ls =
+                while ($p -ne $root) {
+                    Split-Path $here -OutVariable here |
+                    Split-Path -Leaf -OutVariable p 
+                }
+
+            $ls.Where{ $_ -like "${wordToComplete}*" }
+        })]
+        $Value
+    )
     
     <# Note
       PWD is returned as a PathInfo object.
@@ -840,42 +958,42 @@ function Invoke-Up {
       So, get the strings. #> 
     
     $ProviderPathRoot = Convert-Path /
-    function UpDir ($Parent, $Target) {
+    function UpDir ($parent, $target) {
 
-        if ($Parent -eq $ProviderPathRoot) { 
-            return $Target
+        if ($parent -eq $ProviderPathRoot) { 
+            return $target
         }
 
-        $p = Split-Path $Parent
+        $p = Split-Path $parent
         $a = Split-Path $p -Leaf
-        $b = $Target
+        $b = $target
 
         if (!$a -or !$b) {
-             return $PWD.Path
+            return $PWD.Path
         }
 
         if ($a -like $b) {
             return $p
         }
 
-        UpDir $p $Target
+        UpDir $p $target
     }
 
-    function UpNum ($Parent, $Index) {
-        if ($null -eq $Parent -or $null -eq $Index) {
+    function UpNum ($parent, $index) {
+        if ($null -eq $parent -or $null -eq $index) {
             return $PWD.Path
         }
 
-        if ($Index -le 0) {
-            return $PWD.Path
+        if ($index -le 0) {
+           return $PWD.Path
         }
 
         do {
-            $Parent = Split-Path $Parent
-            $Index--
-        } while ($Index -gt 0)
+            $parent = Split-Path $parent
+            $index--
+        } while ($index -gt 0)
         
-        $Parent
+        $parent
     }
 
     $Up = Convert-Path .. 
@@ -909,12 +1027,7 @@ function Invoke-Up {
                 Push-Path $temp
 
                 break
-            }
-
-            Write-Host @"
-usage: up [ dir | num ]
-pwd: $PWD"
-"@
+            } 
         }
     } 
 }
@@ -941,11 +1054,11 @@ $Functions = @(
     'New-NavigationFile'
     'Add-NavigationEntry'
     'Get-NavigationEntry'
+    'Export-NavigationEntry'
     'Remove-NavigationEntry'
     'Invoke-GoPS'
     'Invoke-Back'
     'Invoke-Last'
-    'Export-NavigationDatabase'
     'Update-NavigationDatabase'
     # 'Import-NavigationFile'
 
@@ -965,6 +1078,8 @@ $Aliases = @(
     'getgo'
 
     'up'
+
+    'Export-NavigationDatabase'
 )
 
 Update-NavigationDatabase
