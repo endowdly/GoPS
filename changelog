@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.3] - 13 Mar 2021
+## [2.1.0] - 13 Mar 2021
 
 ### Fixed
 
@@ -21,6 +21,7 @@ Expect `Export-NavigationDatabase` to be removed after all current issues are cl
 
 ### Changed
 
+- this changelog to comply with semver
 - this changelog to be in reverse chronological order (last to first)
 - this changelog to qualify function names (no aliases).
 Also, to be more explicit about details in `Added`, `Changed`, and `Removed` sections.

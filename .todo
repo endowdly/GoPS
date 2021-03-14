@@ -58,18 +58,20 @@
     -- A number of other changes were discovered and resolved
        See changelog for complete listing
 
-2.0.4:
+    -- To be compliant with semver, minor version must be bumped
+
+2.1.1:
     Change:
         ☐ Update all comment-based help
 
 
-2.1.0-manifest:
+2.1.1-manifest:
     Add:
         ☐ Manifest file
             -- This may make 2.1.0 changes difficult or impossible
             -- Add this to a branch for easy changes and rollback
     
-2.1.0: 
+2.2.0: 
     Add:
         ☐ Config file
             -- Allow user to set aliases and set default navigation file path
@@ -82,14 +84,14 @@
             ☐ Add module function to locally set all aliases in config file
             ☐ Change Export-ModuleMember to export all locally set aliases
 
-2.1.1:
+2.2.1:
     Change:
         Update-NavigationEntry:
             Add Entry objects from each path:
                 ☐ Change Path parameter type from string to string[]
                 ☐ Change process block
 
-2.2.0:
+2.4.0:
     Add:
         ☐ Import-NavigationEntry
 
