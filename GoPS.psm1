@@ -223,7 +223,7 @@ function Import-NavigationFile ($s) {
     # string -> Database
 
     if (!(Test-Path $s)) {
-        Write-Warning ($Message.Information.NoNavFile -f $s)
+        Write-Warning ($Message.Warning.NoNavFile -f $s)
 
         return New-Database 
     }

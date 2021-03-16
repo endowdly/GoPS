@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 15 Mar 2021
+
+### Fixed
+
+- Internal function now properly warns the user no nav file is located at the on-load location if it does not exist yet.
+
 ## [2.1.0] - 13 Mar 2021
 
 ### Fixed

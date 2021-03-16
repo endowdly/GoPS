@@ -58,17 +58,17 @@
     -- A number of other changes were discovered and resolved
        See changelog for complete listing
 
-    -- To be compliant with semver, minor version must be bumped
+    -- To be compliant with semver, minor version must be bumped to 2.1.0
 
-2.1.1:
+2.1.2:
     Change:
         ☐ Update all comment-based help
 
 
-2.1.1-manifest:
+2.1.2-manifest:
     Add:
         ☐ Manifest file
-            -- This may make 2.1.0 changes difficult or impossible
+            -- This may make 2.2.0 changes difficult or impossible
             -- Add this to a branch for easy changes and rollback
     
 2.2.0: 
