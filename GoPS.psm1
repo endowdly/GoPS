@@ -1228,7 +1228,7 @@ function Invoke-Up {
     [Alias('up')]
     [CmdletBinding()]
 
-    param(
+    param (
         # This object can be an integer or a string
         [Parameter(Position = 0)]
         [ArgumentCompleter({
@@ -1252,6 +1252,8 @@ function Invoke-Up {
       So, get the strings. #> 
     
     $ProviderPathRoot = Convert-Path /
+
+
     function UpDir ($parent, $target) {
 
         if ($parent -eq $ProviderPathRoot) { 
@@ -1295,8 +1297,7 @@ function Invoke-Up {
     switch ($Value) {
         $null {
             Push-Path $Up
-            break
-        }
+            break }
 
         { $_ -is [int] } {
             $temp = UpNum $PWD $Value
@@ -1305,8 +1306,7 @@ function Invoke-Up {
                 Push-Path $temp
             }
 
-            break
-        }
+            break }
 
         default { 
             if (Test-Path $Value) {
@@ -1321,8 +1321,7 @@ function Invoke-Up {
                 Push-Path $temp
 
                 break
-            } 
-        }
+            } }
     } 
 }
 #endregion
@@ -1358,7 +1357,6 @@ $Functions = @(
 
     'Get-GoPSStack'
     'Get-JumpHistory'
-    'Get-Token'
 
     'Invoke-Up'
 )
