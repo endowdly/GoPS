@@ -1,9 +1,10 @@
 @{
     ShouldProcess    = @{
-        ExportNavigationEntry    = 'Exporting navigation entry -> {0}'
+        ExportNavigationEntry    = 'Exporting navigation entry to target'
         SetDefaultNavigationFile = 'Setting as default path for GoPS'
-        UpdateNavigationDatabase = 'Update navigation database with file -> {0}'
-        NewNavigationFile        = 'Creating new navigation database'
+        UpdateNavigationDatabase = 'Update navigation database from target'
+        NewNavigationFile        = 'Creating new navigation file'
+        AddNavigationEntry       = 'Adding Entry with Token {0} for target'
     }
 
     Error            = @{
@@ -13,6 +14,8 @@
     TerminatingError = @{
         StackDepthExceeded = '{0} exceeds directory stack depth of {1}!'
         NavFileInvalid     = 'Invalid NavFile Path -> {0}'
+        NotANumber         = '{0} is not a number!'
+        NotAPositiveNumber = '{0} is not a positive number!'
     }
 
     Warning          = @{

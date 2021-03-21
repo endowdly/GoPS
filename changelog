@@ -6,6 +6,28 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.2] - 20 Mar 2021
+
+### Fixed
+
+- en-US resource file now has the correct WhatIf messages.
+- `Get-NavigationEntry`: process block now correctly handles array input
+- Now with a process block, like a cmdlet should have:  
+  - `Set-DefaultNavigationFile`  
+  - `Export-NavigationEntry`
+  - `Update-NavigationDatabase`
+- `Invoke-Back` only allows positive numbers as intended.
+
+### Changed
+
+- Improved and updated comment-based help.
+- Small code refactors.
+- Added a small internal function to handle ternary operations: `Invoke-Ternary`.
+- Added SupportsShouldProcess to `Add-NavigationEntry`.
+- `Add-NavigationEntry` only returns the Entry created.
+This makes its behavior more consistent with native PowerShell cmdlets.
+- Added internal validation function to check for positive numbers.
+
 ## [2.1.1] - 15 Mar 2021
 
 ### Fixed
@@ -107,5 +129,5 @@ Time for a total rework.
 
 ## [1.0] - 19 Mar 2019
 
-- Init and I don't rememeber what I did.
+- Init and I don't remember what I did.
 - It should have never been considered 1.0.0 though.
