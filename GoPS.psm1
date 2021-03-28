@@ -20,9 +20,8 @@ using namespace System.Collections.Generic
 #>
 
 param (
-    # This is the default navigation file path to be used in every function. Default: $HOME/.navdb
-    # This parameter exists in lieu of a config file.   
-    $DefaultPath = "$HOME/.gops"
+    # This is the default navigation file path to be used if a config file is missing. Default: $HOME/.navdb
+    $DefaultNavigationFile = "$HOME/.gops"
 )
 
 #region Setup ------------------------------------------------------------------
@@ -47,6 +46,12 @@ $ResourceFile = @{
     BaseDirectory = $PSScriptRoot
     FileName = $ModuleRoot + '.Resources.psd1'
 }
+$ConfigFile = @{
+    BindingVariable = 'Config'
+    BaseDirectory = $PSScriptRoot
+    FileName = $ModuleRoot + '.Config.psd1'
+}
+
 
 # Try to import the resource file
 try {
@@ -56,6 +61,73 @@ catch {
     # Uh-oh. The module is likely broken if this file cannot be found.
     Import-LocalizedData @ResourceFile -UICulture en-US
 }
+
+data ConfigProperties {
+    'DefaultNavigationFile'
+    'CommandAlias' 
+}
+
+data CommandAliasProperties {
+    'Add-NavigationEntry'
+    'Export-NavigationEntry'
+    'Get-DefaultNavigationFile'
+    'Get-GoPSStack'
+    'Get-JumpHistory'
+    'Get-NavigationEntry'
+    'Invoke-Back'
+    'Invoke-GoPS'
+    'Invoke-Last'
+    'Invoke-Up'
+    'New-NavigationFile'
+    'Remove-NavigationEntry'
+    'Set-DefaultNavigationFile'
+    'Update-NavigationDatabase'
+}
+
+data DefaultConfig -SupportedCommand Get-Variable {
+    @{ 
+        DefaultNavigationFile = Get-Variable DefaultNavigationFile -ValueOnly
+        CommandAlias = @{} 
+    }
+}
+
+# Try to import the config file
+try {
+    Import-LocalizedData @ConfigFile 
+
+    $xs = [HashSet[string]] [string[]] $Config.Keys
+    $ys = [HashSet[string]] $ConfigProperties
+
+    if (!$xs.IsSubsetOf($ys)) {
+        [void] $xs.ExceptWith($ys)
+
+        throw ($Message.TerminatingError.InvalidConfig -f ($xs -join ', '), ($ConfigProperties -join ', '))
+    }
+
+    if ($Config.ContainsKey('CommandAlias')) {
+        $xs = [HashSet[string]] [string[]] $Config.CommandAlias.Keys
+        $ys = [HashSet[string]] $CommandAliasProperties
+
+        if (!$xs.IsSubsetOf($ys)) {
+            [void] $xs.ExceptWith($ys)
+
+            throw ($Message.TerminatingError.InvalidCommandAlias -f
+                ($xs -join ', '),                
+                ($CommandAliasProperties -join "`n"))
+        }
+    }
+}
+catch [System.Management.Automation.ItemNotFoundException] {
+    Write-Warning $Message.Warning.ConfigFileNotFound 
+
+    $Config = $DefaultConfig
+}
+catch { 
+    
+    throw $_.Exception
+}
+
+
 
 #endregion
 
@@ -296,9 +368,18 @@ function Push-Path ($s) {
 }
 
 
+$setAlias = {
+    if ($_.Value -eq '') {
+        return
+    }
+
+    Set-Alias -Value $_.Key -Name $_.Value -Scope Script
+}
+
+
 # Module variables go here
 $GoPS = @{
-    DefaultPath = $DefaultPath
+    DefaultPath = $Config.DefaultNavigationFile
     Database    = New-Database
     LastPath    = $PWD.Path
     PathStack   = [Stack[System.IO.DirectoryInfo]] @()
@@ -348,8 +429,6 @@ function Assert-PositiveNumber ($d) {
     $true
 }
 
-
-# Todo: Add Assert-NavigationFile -- ensure a file at a path can be imported as an Entry array @endowdly
 
 #endregion
 
@@ -455,7 +534,6 @@ function Get-DefaultNavigationFile {
 }
 
 
-# Todo: Validate that a given path is a CSV file with a valid Entry array @endowdly @low
 function Set-DefaultNavigationFile {
     <#
     .Synopsis
@@ -581,7 +659,6 @@ function Export-NavigationEntry {
 }
 
 
-# Todo: Validate that a given path is a CSV file with a valid Entry array @endowdly @low
 # Review: Consider an Append switch parameter @endowdly @low
 function Update-NavigationDatabase {
     <#
@@ -681,7 +758,7 @@ function Add-NavigationEntry {
     [CmdletBinding(
         SupportsShouldProcess,
         ConfirmImpact = 'Low')]
-    [Alias('AddGo')]
+    [OutputType([Entry])]
 
     param(
         # Token to use.
@@ -808,10 +885,9 @@ function Get-NavigationEntry {
     #>
 
     [CmdletBinding()] 
-    [Alias('GetGo')]
     [OutputType(
-        [Entry],
-        [string])]
+        [Entry[]],
+        [string[]])]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseDeclaredVarsMoreThanAssignments', '')]
     
     param( 
@@ -847,21 +923,13 @@ function Get-NavigationEntry {
             $x.Where($p)
         }
         $g = {
-            begin {
-                $acc = [List[Entry]] @()
-            }
-
             process { 
                 Convert-Path $_ |
                 ForEach-Object {
                     Import-NavigationFile $_ |
                     ConvertFrom-Database |
-                    ForEach-Object { [void] $acc.Add($_) } }
-            }
-
-            end {
-                $acc.ToArray()
-            }
+                    ForEach-Object { [void] $x.Add($_) } }
+            } 
         }
         $x = [List[Entry]] @()
         $y = [List[Entry]] @()
@@ -869,7 +937,7 @@ function Get-NavigationEntry {
 
     process {
         if ($PSBoundParameters.ContainsKey('Path')) {
-            [void] $Path.ForEach($g).ForEach{ $x.AddRange($_) }
+            [void] $Path.ForEach($g)
         }
         else {
             $GoPS.Database |
@@ -925,7 +993,7 @@ function Remove-NavigationEntry {
     #>
 
     [CmdletBinding()]
-    [Alias('RmGo')]
+    [OutputType([Entry[]])]
 
     param(
         # The tokens to remove from the Database.
@@ -1013,7 +1081,6 @@ function Invoke-GoPS {
       int -> ()
     #>
 
-    [Alias('Go')]
     [CmdletBinding()]
 
     param (
@@ -1099,8 +1166,6 @@ function Invoke-Back {
       int? -> ()
     #>
 
-    [Alias('Back')]
-    
     # The number of back jumps to make. 
     param (
         [ValidateScript({ Assert-PositiveNumber $_ })]
@@ -1133,8 +1198,6 @@ function Invoke-Last {
     .Notes
       () -> ()
     #>
-
-    [Alias('Last')]
 
     param ()
 
@@ -1225,10 +1288,9 @@ function Invoke-Up {
       obj -> ()
     #>
 
-    [Alias('up')]
     [CmdletBinding()]
 
-    param(
+    param (
         # This object can be an integer or a string
         [Parameter(Position = 0)]
         [ArgumentCompleter({
@@ -1252,6 +1314,8 @@ function Invoke-Up {
       So, get the strings. #> 
     
     $ProviderPathRoot = Convert-Path /
+
+
     function UpDir ($parent, $target) {
 
         if ($parent -eq $ProviderPathRoot) { 
@@ -1295,8 +1359,7 @@ function Invoke-Up {
     switch ($Value) {
         $null {
             Push-Path $Up
-            break
-        }
+            break }
 
         { $_ -is [int] } {
             $temp = UpNum $PWD $Value
@@ -1305,8 +1368,7 @@ function Invoke-Up {
                 Push-Path $temp
             }
 
-            break
-        }
+            break }
 
         default { 
             if (Test-Path $Value) {
@@ -1321,8 +1383,7 @@ function Invoke-Up {
                 Push-Path $temp
 
                 break
-            } 
-        }
+            } }
     } 
 }
 #endregion
@@ -1358,20 +1419,15 @@ $Functions = @(
 
     'Get-GoPSStack'
     'Get-JumpHistory'
-    'Get-Token'
 
     'Invoke-Up'
 )
 
-$Aliases = @(
-    'go'
-    'back'
-    'last'
-    'addgo'
-    'rmgo'
-    'getgo'
+# This calls Set-Alias internally
+$Config.CommandAlias.GetEnumerator().ForEach($setAlias)
 
-    'up'
+$Aliases = @(
+    ($Config.CommandAlias.Values -ne '')
 
     'Export-NavigationDatabase'
 )

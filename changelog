@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 27 Mar 2021
+
+### Fixed
+
+- `Get-NavigationEntry` now properly handles multiple input files.
+
+### Added
+
+- `GoPS.Config.psd1`: config file for module
+This config file allows users to set the default file location and command aliases.
+
+### Changed
+
+- The module file now validates the config file
+- The resource file now has messages about config validation
+- Updated documentation and readme
+
 ## [2.1.2] - 20 Mar 2021
 
 ### Fixed
