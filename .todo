@@ -67,22 +67,22 @@
 
 2.1.2-manifest:
     Add:
-        ☐ Manifest file
+        ✔ Manifest file @done(21-03-21 22:42)
             -- This may make 2.2.0 changes difficult or impossible
             -- Add this to a branch for easy changes and rollback
     
 2.2.0: 
     Add:
-        ☐ Config file
+        ✔ Config file @started(21-03-27 14:54) @done(21-03-27 18:20) @lasted(3h26m36s)
             -- Allow user to set aliases and set default navigation file path
 
     Change:
-        ☐ Remove function aliasing from all exported functions
+        ✔ Remove function aliasing from all exported functions @done(21-03-27 18:20)
         ☐ Update readme and module documentation
         
         Update module aliases:
-            ☐ Add module function to locally set all aliases in config file
-            ☐ Change Export-ModuleMember to export all locally set aliases
+            ✔ Add module function to locally set all aliases in config file @done(21-03-27 18:20)
+            ✔ Change Export-ModuleMember to export all locally set aliases @done(21-03-27 18:20)
 
 2.2.1:
     Change:
@@ -90,6 +90,13 @@
             Add Entry objects from each path:
                 ☐ Change Path parameter type from string to string[]
                 ☐ Change process block
+    
+        Export-NavigationEntry:
+            ☐ Add Append switch parameter
+
+2.3.0:
+    Add:
+        ☐ New-NavigationEntry
 
 2.4.0:
     Add:
@@ -108,4 +115,4 @@
       
     Change:
         Invoke-GoPS:
-            ☐ Allow jumping to JumpHistory items
+            ☐ Allow jumping to JumpHistory items?

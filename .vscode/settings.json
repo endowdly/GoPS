@@ -4,8 +4,11 @@
         "addgo",
         "cmdlet",
         "cmdlets",
+        "deconflict",
+        "endowdly",
         "getgo",
         "gops",
+        "hashtable",
         "rmgo"
     ]
 }
