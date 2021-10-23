@@ -94,6 +94,11 @@
         Export-NavigationEntry:
             ☐ Add Append switch parameter
 
+2.2.2: 
+    Change: 
+         Get-NavigationEntry:
+            ☐ When an entry is in memory but not in the default file, highlight it
+
 2.3.0:
     Add:
         ☐ New-NavigationEntry
