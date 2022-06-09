@@ -17,6 +17,14 @@ A configurable, intuitive module with helpful commands allow:
 
 ## Getting Started
 
+### Installing with PowerShellGet
+
+The most straightfoward way!
+
+```powershell
+Install-Module -Name GoPS
+``` 
+
 ### Installing with scoop
 
 ```powershell
@@ -98,7 +106,7 @@ Update-NavigationDatabase [-Path <string>]  # Replaces the database with data fr
 
 You do not need to load or export to a file to manage a database.
 However, the database only lasts for the session and its data is not persistent.
-Use `Export-NavigationDatabase` to save your bookmark Entries.
+Use `Export-NavigationEntry` to save your bookmark Entries.
 
 ### Adding entries
 
@@ -234,6 +242,7 @@ Add-NavigationEntry offside '~/Google Drive/SomeRep/' | Export-NavigationEntry -
 ```
 
 I think an append feature should be implemented for this, don't you?
+Cool, because I did that in 2.2.1!
 
 ## Finding the module
 

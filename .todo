@@ -86,33 +86,34 @@
 
 2.2.1:
     Change:
-        Update-NavigationEntry:
-            Add Entry objects from each path:
-                ☐ Change Path parameter type from string to string[]
-                ☐ Change process block
+        + Allow updating from multiple input files @started(20220608 17:09) @done(2220220608 23:30) @lasted(6h21m25s) 
+        + Add Append switch parameter to `Export-NavigationEntry`
     
-        Export-NavigationEntry:
-            ☐ Add Append switch parameter
+2.2.2: 
+    Change:
+        - Add append switch to `Update-NavigationEntry`            
 
 2.3.0:
     Add:
-        ☐ New-NavigationEntry
+        - New-NavigationEntry 
+            -- This will be like `Add-` but it will allow a user to create a one-off
+            -- entry to pass around as they see fit.
+            -- Will be handy with `Export-NavigationEntry -Append`! 
 
-2.4.0:
-    Add:
-        ☐ Import-NavigationEntry
-
+2.3.1: 
     Change:
         Add-NavigationEntry:
             Add Entry ParameterSet:
-                ☐ Set CmdletBinding attribute DefaultParameterSet property
-                ☐ Add Entry parameter
-                ☐ Change process block
-        
+                - Set CmdletBinding attribute DefaultParameterSet property
+                - Add Entry parameter
+                - Change process block
+
 3.0.0:
     Remove:
-        ☐ Export-NavigationDatabase
-      
+        - Export-NavigationDatabase
+
     Change:
-        Invoke-GoPS:
-            ☐ Allow jumping to JumpHistory items?
+        - Allow jumping to JumpHistory items?
+        - Allow jumping to Stack items?
+            -- These would require argument completers
+            -- and some reworks of the `-Last` and `-Back` parameters

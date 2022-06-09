@@ -637,6 +637,8 @@ function Export-NavigationEntry {
         [ValidateScript({ Assert-Path $_ })]
         [Alias('PSPath')]
         [string] $Path = $GoPS.DefaultPath
+        ,
+        [switch] $Append
     )
 
     begin {
@@ -653,7 +655,7 @@ function Export-NavigationEntry {
 
         if ($PSCmdlet.ShouldProcess($Path, $Message.ShouldProcess.ExportNavigationEntry)) {
             $InputObject |
-                Export-Csv -Path $Path -NoTypeInformation
+                Export-Csv -Path $Path -NoTypeInformation -Append:$Append
         }
     }
 }
@@ -698,13 +700,34 @@ function Update-NavigationDatabase {
             ValueFromPipelineByPropertyName)]
         [ValidateScript({ Assert-Path $_ })]
         [Alias('PSPath')]
-        [string] $Path = $GoPS.DefaultPath
+        [string[]] $Path = $GoPS.DefaultPath
     )
+
+    begin {
+        $ls = [List[Entry]] @() 
+        # adds each item to a specified list
+        $f = { 
+            $ls, $null = $args
+            [void] $ls.Add($_)
+        } 
+
+        # string -> Entry[]
+        $g = {
+            Import-NavigationFile $_ | ConvertFrom-Database
+        }
+
+        $x = New-Database
+    }
 
     process { 
         if ($PSCmdlet.ShouldProcess($Path, $Message.ShouldProcess.UpdateNavigationDatabase)) { 
-            $GoPS.Database = Import-NavigationFile $Path
+            $Path.ForEach($g).ForEach($f, $ls) 
         }
+    }
+    end { 
+        $ls | Add-Entry $x
+        
+        $GoPS.Database = $x
     }
 }
 
