@@ -22,8 +22,8 @@ A configurable, intuitive module with helpful commands allow:
 The most straightfoward way!
 
 ```powershell
-Install-Module -Name GoPS
-``` 
+Install-Module -Name GoPS # -Scope CurrentUser
+ ``` 
 
 ### Installing with scoop
 

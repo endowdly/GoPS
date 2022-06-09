@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 09 Jun 2022
+
+### Changed 
+
+- `Update-NavigationDatabase` now accepts multiple paths.
+The database in memory will use all the files passed to it, provided there are no token conflicts.
+- `Export-NavigationEntry` now has an `-Append` switch to prevent overwrites of files.
+Token validation does not happen (yet)!
+Validation will have to be added later.
+
 ## [2.2.0] - 27 Mar 2021
 
 ### Fixed

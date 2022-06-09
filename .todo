@@ -1,119 +1,25 @@
-2.0:
-    -- After migrating across several computers, I've noticed I have huge issues
-    -- Time for a total rework. 
+- Update readme and module documentation 
+- Add append switch to `Update-NavigationEntry`            
 
-    Add: 
-        ✘ Config file @cancelled(20-10-19 18:45)
-        ✔ Export-NavigationDatabase @done(20-10-18 20:01)
-        ✔ Update-NavigationDatabase @done(20-10-18 20:01)
-        ✔ Up @done(21-02-20 22:05)
+Update-NavigationDatabase:
+    - Add append switch
+    - Assert append does not cause token conflict
 
-    Reimplement:
-        ✔ New-NavigationFile @started(20-10-16 17:25) @done(20-10-18 13:37) @lasted(1d20h12m23s)
-        ✔ Get-DefaultNavigationFile @started(20-10-18 13:32) @done(20-10-18 13:33) @lasted(1m15s)
-        ✔ Set-DefaultNavigationFile @started(20-10-18 13:32) @done(20-10-18 13:45) @lasted(13m2s)
-        ✔ Add-NavigationEntry @done(20-10-19 01:08)
-        ✔ Get-NavigationEntry @done(20-10-19 01:08)
-        ✔ Remove-NavigationEntry @done(20-10-19 01:08)
-        ✔ Invoke-GoPS @done(20-10-19 19:57)
-        ✔ Invoke-Back @done(20-10-19 19:57)
+- Assert `-Append` in `Export-NavigationEntry` does not cause token conflict
+- Add `New-NavigationEntry` 
+    -- This will be like `Add-` but it will allow a user to create a one-off
+    -- entry to pass around as they see fit.
+    -- Will be handy with `Export-NavigationEntry -Append`! 
 
-    ✔ Document @done(21-02-20 22:05)
+Write Add-NavigationEntry:
+    Add Entry ParameterSet:
+        - Set CmdletBinding attribute DefaultParameterSet property
+        - Add Entry parameter
+        - Change process block
 
-2.0.1: 
-
-    Fix:
-        ✔ Jumping to normal, non-token paths @started(21-02-27 13:23) @done(21-02-27 13:30) @lasted(7m36s)
-        ✔ Adding non-qualified paths @started(21-02-27 13:24) @done(21-02-27 13:30) @lasted(6m37s)
-
-    Change:
-        ✔ Clean up readme. Should be a fix, if you ask me. @started(21-02-20 23:30) @done(21-02-27 13:09) @lasted(6d13h39m19s)
-        ✔ Update installation instructions in readme (no unzipping) @done(21-02-27 13:09)
-            -- Redundant but...
-
-2.0.2:
-    Change:
-        ✔ Allow ArgumentCompleter for NavigationEntry functions to match on partial tags @started(21-03-06 09:03) @done(21-03-06 10:24) @lasted(1h21m58s)
-
-    Change:
-        ✔ General code cleanup @started(21-03-06 10:25) @done(21-03-06 10:36) @lasted(11m32s)
-
-2.0.3:
-    Change:
-        Invoke-Up:
-            ✔ Cleanup @done(21-03-13 18:39)
-            
-            Value parameter:
-                ✔ Add ArgumentCompleter attribute @started(21-03-13 10:24) @done(21-03-13 12:44) @lasted(2h20m41s)
-            Comment-based help:
-                ✔ Update @started(21-03-13 17:41) @done(21-03-13 18:40) @lasted(59m10s)
-            
-        Remove-NavigationEntry:
-            ✘ Accept Entry objects as Input @started(21-03-13 12:58) @cancelled(21-03-13 13:46) @wasted(48m14s)
-                -- The ValueFromPipelineByPropertyName Parameter attribute covers this
-
-    Add:
-        ✔ Export-NavigationEntry @done(21-03-13 17:00)
-
-    -- A number of other changes were discovered and resolved
-       See changelog for complete listing
-
-    -- To be compliant with semver, minor version must be bumped to 2.1.0
-
-2.1.2:
-    Change:
-        ✔ Update all comment-based help @done(21-03-21 00:56)
-
-
-2.1.2-manifest:
-    Add:
-        ✔ Manifest file @done(21-03-21 22:42)
-            -- This may make 2.2.0 changes difficult or impossible
-            -- Add this to a branch for easy changes and rollback
-    
-2.2.0: 
-    Add:
-        ✔ Config file @started(21-03-27 14:54) @done(21-03-27 18:20) @lasted(3h26m36s)
-            -- Allow user to set aliases and set default navigation file path
-
-    Change:
-        ✔ Remove function aliasing from all exported functions @done(21-03-27 18:20)
-        ☐ Update readme and module documentation
-        
-        Update module aliases:
-            ✔ Add module function to locally set all aliases in config file @done(21-03-27 18:20)
-            ✔ Change Export-ModuleMember to export all locally set aliases @done(21-03-27 18:20)
-
-2.2.1:
-    Change:
-        + Allow updating from multiple input files @started(20220608 17:09) @done(2220220608 23:30) @lasted(6h21m25s) 
-        + Add Append switch parameter to `Export-NavigationEntry`
-    
-2.2.2: 
-    Change:
-        - Add append switch to `Update-NavigationEntry`            
-
-2.3.0:
-    Add:
-        - New-NavigationEntry 
-            -- This will be like `Add-` but it will allow a user to create a one-off
-            -- entry to pass around as they see fit.
-            -- Will be handy with `Export-NavigationEntry -Append`! 
-
-2.3.1: 
-    Change:
-        Add-NavigationEntry:
-            Add Entry ParameterSet:
-                - Set CmdletBinding attribute DefaultParameterSet property
-                - Add Entry parameter
-                - Change process block
-
-3.0.0:
-    Remove:
-        - Export-NavigationDatabase
-
-    Change:
-        - Allow jumping to JumpHistory items?
-        - Allow jumping to Stack items?
-            -- These would require argument completers
-            -- and some reworks of the `-Last` and `-Back` parameters
+- Write `Set-GoPSConfiguration` 
+- Remove `Export-NavigationDatabase` 
+- Allow jumping to JumpHistory items?
+- Allow jumping to Stack items?
+    -- These would require argument completers
+    -- and some reworks of the `-Last` and `-Back` parameters
