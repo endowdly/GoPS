@@ -39,8 +39,9 @@ param (
  
 #>
 
-$ErrorActionPreference = 'Stop' 
-$ModuleRoot = Split-Path $PSScriptRoot -Leaf
+Set-Variable ErrorActionPreference Stop
+Set-Variable ModuleRoot Gops -Option ReadOnly
+
 $ResourceFile = @{ 
     BindingVariable = 'Message'
     BaseDirectory = $PSScriptRoot

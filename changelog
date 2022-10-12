@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 12 Oct 2022
+
+### Changed 
+
+- `GoPS.psm1`: fixed a module loading error caused when module is side-loaded with many versions.
+
 ## [2.2.1] - 09 Jun 2022
 
 ### Changed 
